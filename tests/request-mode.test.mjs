@@ -6,7 +6,7 @@ import worker from '../src/worker.js';
 
 function mockDatabase() {
   const sqlite = new DatabaseSync(':memory:');
-  for (const file of ['0001_initial.sql', '0002_requests_mode.sql']) {
+  for (const file of ['0001_initial.sql', '0002_requests_mode.sql', '0003_client_management.sql']) {
     sqlite.exec(readFileSync(new URL('../migrations/' + file, import.meta.url), 'utf8'));
   }
   const DB = {
@@ -91,4 +91,65 @@ test('automatic table allocation is still supported when staff explicitly select
   const booked = await read(await worker.fetch(req('/api/reservations', 'POST', data), env, ctx));
   assert.equal(booked.status, 201, JSON.stringify(booked.data));
   assert.ok(sqlite.prepare('SELECT table_id FROM reservations WHERE id=?').get(booked.data.id).table_id);
+});
+
+
+test('self-service link permits changes and cancellation but not guessing links', async () => {
+  const { DB, sqlite } = mockDatabase();
+  const env = envFor(DB), date = futureDate();
+  const submit = await read(await worker.fetch(req('/api/reservations','POST',{
+    date, time:'20:00', guests:2, name:'Cliente Test', phone:'3332866829',privacy:true
+  }),env,ctx));
+  assert.equal(submit.status,201,JSON.stringify(submit.data));
+  assert.match(submit.data.manage_url,/\/gestisci\/#[-_a-zA-Z0-9]{43}$/);
+  const token=submit.data.manage_url.split('#')[1];
+  assert.equal(sqlite.prepare('SELECT length(manage_token_hash) AS size FROM reservations WHERE id=?').get(submit.data.id).size,43);
+  assert.equal(sqlite.prepare('SELECT manage_token_hash FROM reservations WHERE id=?').get(submit.data.id).manage_token_hash===token,false);
+  const lookup=await read(await worker.fetch(req('/api/manage/lookup','POST',{token}),env,ctx));
+  assert.equal(lookup.status,200,JSON.stringify(lookup.data));
+  assert.equal(lookup.data.booking.status,'pending');
+  const bad=await read(await worker.fetch(req('/api/manage/lookup','POST',{token:'A'.repeat(43)}),env,ctx));
+  assert.equal(bad.status,404);
+  const tomorrow=new Date(date+'T12:00:00Z');tomorrow.setUTCDate(tomorrow.getUTCDate()+1);
+  const newDate=tomorrow.toISOString().slice(0,10);
+  const update=await read(await worker.fetch(req('/api/manage/update','POST',{
+    token,date:newDate,time:'21:00',guests:3
+  }),env,ctx));
+  assert.equal(update.status,200,JSON.stringify(update.data));
+  assert.equal(update.data.booking.guests,3);
+  assert.equal(update.data.booking.status,'pending');
+  assert.equal(sqlite.prepare('SELECT table_id FROM reservations WHERE id=?').get(submit.data.id).table_id,null);
+  const cancelled=await read(await worker.fetch(req('/api/manage/cancel','POST',{token}),env,ctx));
+  assert.equal(cancelled.status,200,JSON.stringify(cancelled.data));
+  assert.equal(sqlite.prepare('SELECT status FROM reservations WHERE id=?').get(submit.data.id).status,'cancelled');
+  const again=await read(await worker.fetch(req('/api/manage/update','POST',{
+    token,date:newDate,time:'19:00',guests:1
+  }),env,ctx));
+  assert.equal(again.status,409);
+});
+test('admin sees month totals, edits guest count and date, generates rotated links and sees history',async()=>{
+  const {DB,sqlite}=mockDatabase(), env=envFor(DB), date=futureDate();
+  const created=await read(await worker.fetch(req('/api/reservations','POST',{
+    date,time:'20:00',guests:2,name:'Cliente Scala',phone:'3332866829',privacy:true
+  }),env,ctx));
+  assert.equal(created.status,201,JSON.stringify(created.data));
+  const cookieResponse=await read(await worker.fetch(req('/api/admin/login','POST',{password}),env,ctx));
+  assert.equal(cookieResponse.status,200);
+  const cookie=cookieResponse.headers.get('set-cookie').split(';')[0];
+  const month=await read(await worker.fetch(req('/api/admin/calendar?month='+date.slice(0,7),'GET',null,cookie),env,ctx));
+  assert.equal(month.status,200);
+  assert.equal(month.data.days.find(d=>d.date===date).pending,1);
+  const edited=await read(await worker.fetch(req('/api/admin/reservations/'+created.data.id,'PATCH',{
+    guests:4,time:'21:00',name:'Cliente Scala',phone:'3332866829',status:'pending'
+  },cookie),env,ctx));
+  assert.equal(edited.status,200,JSON.stringify(edited.data));
+  assert.equal(sqlite.prepare('SELECT guests,service_time FROM reservations WHERE id=?').get(created.data.id).guests,4);
+  const link=await read(await worker.fetch(req('/api/admin/reservations/'+created.data.id+'/link','POST',{},cookie),env,ctx));
+  assert.equal(link.status,200,JSON.stringify(link.data));
+  const oldToken=created.data.manage_url.split('#')[1];
+  const invalid=await read(await worker.fetch(req('/api/manage/lookup','POST',{token:oldToken}),env,ctx));
+  assert.equal(invalid.status,404);
+  const history=await read(await worker.fetch(req('/api/admin/reservations/'+created.data.id+'/history','GET',null,cookie),env,ctx));
+  assert.equal(history.status,200);
+  assert.ok(history.data.items.some(i=>i.action==='updated'));
 });
