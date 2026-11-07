@@ -113,3 +113,52 @@ body.edit-open{overflow:hidden}
 .month-day.is-closed .day-number{color:#a95b50}
 @media(max-width:800px){.weekday-options{grid-template-columns:repeat(4,minmax(0,1fr))}.closure-settings{padding:19px}.closure-card{padding:15px}.closure-range-fields label{min-width:130px}}
 @media(max-width:500px){.weekday-options{grid-template-columns:repeat(4,minmax(0,1fr))}.weekday-options label{font-size:11px;min-height:41px}.closure-quick-row label,.closure-range-fields label{min-width:100%}.closure-quick-row button,.closure-range-fields button{width:100%}.month-day.is-closed .month-closed{font-size:7px;padding:2px}.closure-settings-head h3{font-size:27px}}
+
+
+/* Topbar redesign: preserve fully visible "Nuova prenotazione" on every viewport. */
+.topbar-actions .new-booking-action{
+  display:inline-flex!important;align-items:center;justify-content:center;gap:9px;
+  flex:0 0 auto;white-space:nowrap;padding:12px 17px!important;
+  border-radius:8px;min-height:47px;
+  background:#2e5a3c;color:#fff;
+  font-family:'DM Sans',Arial,sans-serif;
+  font-size:12px!important;font-weight:700;line-height:1.2;
+  letter-spacing:0;
+  box-shadow:0 5px 17px rgba(27,64,38,.16);
+}
+.topbar-actions .new-booking-action::first-letter{font-size:inherit!important}
+.topbar-actions .new-booking-action:hover{background:#224a30;transform:translateY(-1px)}
+.new-booking-icon{display:flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid rgba(255,255,255,.36);border-radius:50%;font-size:19px!important;line-height:1;font-weight:400}
+.new-booking-label{font-size:12px!important;display:inline!important;letter-spacing:0}
+@media(max-width:1050px){
+  .topbar{align-items:flex-start;gap:18px}
+  .topbar-actions{flex-wrap:wrap;justify-content:flex-end;max-width:100%}
+}
+@media(max-width:740px){
+  .topbar{
+    display:flex;flex-direction:column;align-items:stretch!important;
+    gap:17px;padding:23px 5% 18px;
+  }
+  .topbar h1{font-size:clamp(27px,7vw,34px)}
+  .topbar-actions{
+    width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);
+    align-items:stretch!important;justify-content:stretch;gap:9px;
+  }
+  .topbar-actions .current-date{grid-column:1/-1;display:none}
+  .topbar-actions .outline{
+    display:inline-flex!important;justify-content:center;align-items:center;
+    gap:6px;font-size:11px!important;min-height:47px;padding:10px 11px!important;
+    white-space:normal;text-align:center;border-radius:8px;
+  }
+  .topbar-actions .new-booking-action{
+    width:100%;min-width:0!important;min-height:47px;white-space:nowrap;
+    padding:10px 10px!important;gap:5px;
+  }
+  .new-booking-label{font-size:11px!important}
+  .new-booking-icon{font-size:17px!important;width:20px;height:20px}
+  .topbar-actions .primary::first-letter{font-size:inherit!important}
+}
+@media(max-width:370px){
+  .topbar-actions{grid-template-columns:minmax(0,1fr);gap:8px}
+  .new-booking-label{font-size:12px!important}
+}
