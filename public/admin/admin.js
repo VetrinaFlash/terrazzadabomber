@@ -20,14 +20,15 @@ $('#selectedDate').addEventListener('change',()=>{selectedDate=$('#selectedDate'
 function shiftDate(n){const d=parseDay(selectedDate);d.setDate(d.getDate()+n);selectedDate=dateLocal(d);$('#selectedDate').value=selectedDate;refresh();}
 $('#prevDate').addEventListener('click',()=>shiftDate(-1));$('#nextDate').addEventListener('click',()=>shiftDate(1));$('#todayBtn').addEventListener('click',()=>{selectedDate=dateLocal(new Date());$('#selectedDate').value=selectedDate;refresh();});
 $$('#statusFilters button').forEach(b=>b.addEventListener('click',()=>{activeFilter=b.dataset.status;$$('#statusFilters button').forEach(x=>x.classList.toggle('active',x===b));renderBookings();}));
-async function refresh(){try{const d=await api('/admin/dashboard?date='+encodeURIComponent(selectedDate));dashboard=d;renderBookings();if(activeTab==='tables')renderTables();if(activeTab==='settings')renderSettings();}catch(e){toast(e.message,true);}}
+async function refresh(){try{const d=await api('/admin/dashboard?date='+encodeURIComponent(selectedDate));dashboard=d;renderBookings();if(activeTab==='tables')renderTables();if(activeTab==='settings')renderSettings();if(activeTab==='reservations'){if(calendarMonth!==selectedDate.slice(0,7))calendarMonth=selectedDate.slice(0,7);loadAdminCalendar();}}catch(e){toast(e.message,true);}}
 function badge(status){return {pending:'Da confermare',confirmed:'Confermata',seated:'Al tavolo',cancelled:'Annullata',no_show:'No show'}[status]||status;}
 function cleanPhone(phone){let n=String(phone).replace(/\D/g,'');if(n.startsWith('00'))n=n.slice(2);else if(n.length===10)n='39'+n;return n;}
 function whatsapp(r){const day=new Intl.DateTimeFormat('it-IT',{day:'numeric',month:'long'}).format(parseDay(r.service_date));const phrase=r.status==='confirmed' || r.status==='seated' ? 'Ti confermiamo la prenotazione' : 'Abbiamo ricevuto la tua richiesta di prenotazione, presto ti daremo conferma';const msg=`Ciao ${r.customer_name}! 🌿 ${phrase} da Terrazza da Bomber per ${r.guests} ${r.guests===1?'persona':'persone'}, ${day} alle ${r.service_time}. Ci trovi in Via Vittorio Emanuele III 3, Scalea. A presto!`;return `https://wa.me/${cleanPhone(r.phone)}?text=${encodeURIComponent(msg)}`;}
 function renderBookings(){if(!dashboard)return;const r=dashboard.bookings;const active=r.filter(x=>!['cancelled','no_show'].includes(x.status));const counts={pending:active.filter(x=>x.status==='pending').length,confirmed:active.filter(x=>x.status==='confirmed').length,seated:active.filter(x=>x.status==='seated').length};const stats=[active.length,counts.pending,counts.confirmed+counts.seated,active.reduce((n,x)=>n+x.guests,0)];$$('#stats strong').forEach((e,i)=>e.textContent=stats[i]);$('#countBadge').textContent=r.length;const selected=activeFilter==='all'?r:r.filter(x=>x.status===activeFilter);const node=$('#bookingList');if(!selected.length){node.innerHTML='<div class="empty-state"><div><strong>Nessuna prenotazione</strong>Niente in agenda con questi filtri.<br>Una buona serata inizia da qui.</div></div>';return;}
-node.innerHTML=selected.map(x=>`<article class="booking-row ${['cancelled','no_show'].includes(x.status)?'is-muted':''}"><div class="booking-time">${esc(x.service_time)}</div><div class="booking-guest"><strong>${esc(x.customer_name)}</strong><small>${x.guests} ${x.guests===1?'persona':'persone'} · ${esc(x.source==='staff'?'Inserita dallo staff':'Dal sito web')}</small><a href="tel:${esc(cleanPhone(x.phone))}">${esc(x.phone)}</a></div><div class="booking-meta"><strong>${esc(x.table_label||'Tavolo non assegnato')}</strong><small>${esc(x.notes?'Note presenti':'Nessuna nota')}</small></div><div class="booking-status"><span class="pill ${esc(x.status)}">${esc(badge(x.status))}</span></div><div class="booking-actions">${x.status==='pending'&&!x.table_id?`<label class="assignment-label">ASSEGNA TAVOLO<select class="assign-table" data-assign="${x.id}"><option value="">Scegli tavolo</option>${dashboard.tables.filter(t=>t.active&&t.capacity>=x.guests).map(t=>`<option value="${t.id}">${esc(t.label)} · ${t.capacity} posti</option>`).join('')}</select></label>`:''}${x.status==='pending'?`<button class="confirm-action" data-id="${x.id}">✓ Conferma</button>`:''}${['pending','confirmed'].includes(x.status)?`<a class="wa-action" href="${esc(whatsapp(x))}" data-wa="${x.id}" target="_blank" rel="noopener">WhatsApp ↗</a>`:''}${x.status==='confirmed'?`<button data-id="${x.id}" data-status="seated">Al tavolo</button>`:''}${!['cancelled','no_show'].includes(x.status)?`<button class="cancel-action" data-id="${x.id}" data-status="cancelled">Annulla</button>`:''}${x.status==='cancelled'?`<button data-id="${x.id}" data-status="pending">Ripristina</button>`:''}</div>${x.notes?`<div class="booking-notes">✎ ${esc(x.notes)}</div>`:''}</article>`).join('');
+node.innerHTML=selected.map(x=>`<article class="booking-row ${['cancelled','no_show'].includes(x.status)?'is-muted':''}"><div class="booking-time">${esc(x.service_time)}</div><div class="booking-guest"><strong>${esc(x.customer_name)}</strong><small>${x.guests} ${x.guests===1?'persona':'persone'} · ${esc(x.source==='staff'?'Inserita dallo staff':'Dal sito web')}</small><a href="tel:${esc(cleanPhone(x.phone))}">${esc(x.phone)}</a></div><div class="booking-meta"><strong>${esc(x.table_label||'Tavolo non assegnato')}</strong><small>${esc(x.notes?'Note presenti':'Nessuna nota')}</small></div><div class="booking-status"><span class="pill ${esc(x.status)}">${esc(badge(x.status))}</span></div><div class="booking-actions"><button type="button" class="edit-action" data-edit="${x.id}">✎ Modifica</button>${x.status==='pending'&&!x.table_id?`<label class="assignment-label">ASSEGNA TAVOLO<select class="assign-table" data-assign="${x.id}"><option value="">Scegli tavolo</option>${dashboard.tables.filter(t=>t.active&&t.capacity>=x.guests).map(t=>`<option value="${t.id}">${esc(t.label)} · ${t.capacity} posti</option>`).join('')}</select></label>`:''}${x.status==='pending'?`<button class="confirm-action" data-id="${x.id}">✓ Conferma</button>`:''}${['pending','confirmed'].includes(x.status)?`<a class="wa-action" href="${esc(whatsapp(x))}" data-wa="${x.id}" target="_blank" rel="noopener">WhatsApp ↗</a>`:''}${x.status==='confirmed'?`<button data-id="${x.id}" data-status="seated">Al tavolo</button>`:''}${!['cancelled','no_show'].includes(x.status)?`<button class="cancel-action" data-id="${x.id}" data-status="cancelled">Annulla</button>`:''}${x.status==='cancelled'?`<button data-id="${x.id}" data-status="pending">Ripristina</button>`:''}</div>${x.notes?`<div class="booking-notes">✎ ${esc(x.notes)}</div>`:''}</article>`).join('');
 node.querySelectorAll('button[data-status]').forEach(b=>b.addEventListener('click',()=>updateStatus(b.dataset.id,b.dataset.status)));
 node.querySelectorAll('.confirm-action').forEach(b=>b.addEventListener('click',()=>{const select=node.querySelector('select[data-assign="'+b.dataset.id+'"]');if(select&&!select.value){toast('Scegli prima un tavolo reale. Se non c’è, aggiungilo in Tavoli & fasce.',true);return;}updateStatus(b.dataset.id,'confirmed',select?Number(select.value):undefined);}));
+node.querySelectorAll('.edit-action').forEach(b=>b.addEventListener('click',()=>openEdit(b.dataset.edit)));
 }
 async function updateStatus(id,status,tableId){try{await api('/admin/reservations/'+id,{method:'PATCH',body:JSON.stringify({status,...(tableId===undefined?{}:{table_id:tableId})})});toast('Prenotazione aggiornata');await refresh();}catch(e){toast(e.message,true);}}
 function slots(){return dashboard?.settings.slots||['19:00','19:30','20:00','20:30','21:00','21:30','22:00'];}
@@ -47,4 +48,117 @@ const b64bytes=s=>{const str=atob(s.replace(/-/g,'+').replace(/_/g,'/'));return 
 $('#enablePush').addEventListener('click',async()=>{const btn=$('#enablePush');btn.disabled=true;try{if(!('serviceWorker'in navigator)||!('PushManager'in window)||!('Notification'in window)||!window.isSecureContext)throw Error('Notifiche push non supportate in questo browser');const me=await api('/admin/me');if(!me.push_enabled||!me.vapid_public_key)throw Error('Notifiche push non configurate sul server');const permission=await Notification.requestPermission();if(permission!=='granted')throw Error('Permesso notifiche non concesso');const reg=await navigator.serviceWorker.register('/sw.js',{scope:'/admin/'});await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();if(sub&&sub.options.applicationServerKey&&btoa(String.fromCharCode(...new Uint8Array(sub.options.applicationServerKey))).replace(/=+$/,'').replace(/\+/g,'-').replace(/\//g,'_')!==me.vapid_public_key){await sub.unsubscribe();sub=null;}if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64bytes(me.vapid_public_key)});await post('/admin/push',sub.toJSON());toast('Notifiche attivate su questo dispositivo');btn.innerHTML='✓ Notifiche attive';}catch(e){toast(e.message,true);}finally{btn.disabled=false;}});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data?.type==='BOOKING_PUSH')refresh();});
 setInterval(()=>{if(dashboard&&!document.hidden)refresh();},30000);
+
+/* Full booking-management workflow: month calendar, edit form, audit trail, customer links. */
+let calendarMonth=selectedDate.slice(0,7),calendarSeq=0,editing=null;
+const monthFormat=new Intl.DateTimeFormat('it-IT',{month:'long',year:'numeric'});
+function nextCalendarMonth(delta){
+  const [y,m]=calendarMonth.split('-').map(Number);
+  const next=new Date(y,m-1+delta,1);
+  calendarMonth=dateLocal(next).slice(0,7);
+  loadAdminCalendar();
+}
+$('#monthPrev').addEventListener('click',()=>nextCalendarMonth(-1));
+$('#monthNext').addEventListener('click',()=>nextCalendarMonth(1));
+async function loadAdminCalendar(){
+  const seq=++calendarSeq;
+  const node=$('#adminCalendar');
+  try{
+    const data=await api('/admin/calendar?month='+encodeURIComponent(calendarMonth));
+    if(seq!==calendarSeq)return;
+    const [y,m]=calendarMonth.split('-').map(Number);
+    const first=new Date(y,m-1,1);
+    const days=new Date(y,m,0).getDate();
+    const offset=(first.getDay()+6)%7;
+    const countMap=new Map(data.days.map(d=>[d.date,d]));
+    $('#monthTitle').textContent=monthFormat.format(first);
+    const header=['L','M','M','G','V','S','D'].map((day,i)=>'<span class="month-weekday" aria-label="'+['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'][i]+'">'+day+'</span>').join('');
+    node.innerHTML=header+Array.from({length:offset},()=>'<span aria-hidden="true"></span>').join('')+
+      Array.from({length:days},(_,i)=>{const day=dateLocal(new Date(y,m-1,i+1));const counts=countMap.get(day)||{total:0,pending:0,covers:0};return '<button type="button" data-day="'+day+'" class="month-day '+(day===selectedDate?'active':'')+'"><span class="day-number">'+(i+1)+'</span>'+(counts.total?'<span class="month-count">'+counts.total+' pren.</span><small>'+counts.pending+' attesa · '+counts.covers+' cop.</small>':'<small class="empty-day">—</small>')+'</button>'}).join('');
+    node.querySelectorAll('button[data-day]').forEach(b=>b.addEventListener('click',()=>{
+      selectedDate=b.dataset.day;$('#selectedDate').value=selectedDate;refresh();
+    }));
+  }catch(e){if(seq===calendarSeq)node.textContent='Calendario temporaneamente non disponibile: '+e.message;}
+}
+function closeEdit(){
+  $('#editModal').hidden=true;document.body.classList.remove('edit-open');editing=null;
+}
+function openEdit(id){
+  const row=dashboard?.bookings.find(b=>b.id===id);
+  if(!row)return toast('Prenotazione non trovata',true);
+  editing=row;
+  const form=$('#editForm');
+  for(const [key,val] of Object.entries({date:row.service_date,time:row.service_time,guests:row.guests,name:row.customer_name,phone:row.phone,notes:row.notes||'',status:row.status})){
+    if(form.elements.namedItem(key))form.elements.namedItem(key).value=val;
+  }
+  const tables=dashboard.tables.filter(t=>t.active||t.id===row.table_id);
+  $('#editTable').innerHTML='<option value="">Non assegnato</option>'+tables.map(t=>'<option value="'+t.id+'">'+esc(t.label)+' · '+t.capacity+' posti'+(!t.active?' (disattivo)':'')+'</option>').join('');
+  $('#editTable').value=row.table_id==null?'':String(row.table_id);
+  $('#editModal').hidden=false;document.body.classList.add('edit-open');
+  $('#editHistory').textContent='Caricamento cronologia…';
+  api('/admin/reservations/'+id+'/history').then(r=>{
+    if(!editing||editing.id!==id)return;
+    if(!r.items.length){$('#editHistory').textContent='Nessuna modifica registrata.';return;}
+    const actions={created:'Richiesta creata',updated:'Modificata dallo staff',rescheduled:'Modificata dal cliente',cancelled:'Annullata dal cliente',link_created:'Nuovo link generato'};
+    $('#editHistory').innerHTML=r.items.map(item=>'<div class="history-item"><strong>'+esc(actions[item.action]||item.action)+'</strong><small>'+esc(item.created_at)+' · '+esc(item.actor==='customer'?'Cliente':'Staff')+'</small></div>').join('');
+  }).catch(()=>{$('#editHistory').textContent='Cronologia non disponibile';});
+  form.elements.namedItem('date').focus();
+}
+$('#closeEdit').addEventListener('click',closeEdit);
+$('#editModal').addEventListener('click',e=>{if(e.target.id==='editModal')closeEdit();});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#editModal').hidden)closeEdit();});
+$('#editForm').addEventListener('submit',async e=>{
+  e.preventDefault();if(!editing)return;
+  const submit=$('#editSave');
+  const data=Object.fromEntries(new FormData(e.currentTarget));
+  data.guests=Number(data.guests);
+  data.table_id=data.table_id?Number(data.table_id):null;
+  submit.disabled=true;
+  try{
+    const updated=await api('/admin/reservations/'+editing.id,{method:'PATCH',body:JSON.stringify(data)});
+    const id=editing.id;
+    toast('Prenotazione aggiornata. Puoi avvisare il cliente su WhatsApp.');
+    await refresh();
+    const fresh=dashboard?.bookings.find(x=>x.id===id);
+    if(fresh)editing=fresh;
+    $('#editHistory').textContent='Modifica salvata. Riapri la scheda per vedere la cronologia.';
+  }catch(err){toast(err.message,true);}
+  finally{submit.disabled=false;}
+});
+function waUrl(record,text){
+  return 'https://wa.me/'+cleanPhone(record.phone)+'?text='+encodeURIComponent(text);
+}
+function updateText(record,link=''){
+  const day=new Intl.DateTimeFormat('it-IT',{weekday:'long',day:'numeric',month:'long'}).format(parseDay(record.service_date));
+  const status=record.status==='confirmed'?'confermata':record.status==='cancelled'?'annullata':record.status==='pending'?'in attesa di conferma':record.status==='seated'?'in corso':'aggiornata';
+  return 'Ciao '+record.customer_name+'! 🌿 La tua prenotazione da Terrazza da Bomber è '+status+'. Riepilogo: '+day+' alle '+record.service_time+', '+record.guests+' '+(record.guests===1?'persona':'persone')+'. '+(link?'Puoi modificarla o cancellarla da qui: '+link+' ':'')+'A presto!';
+}
+$('#sendUpdateWa').addEventListener('click',()=>{
+  if(!editing)return;
+  window.open(waUrl(editing,updateText(editing)),'_blank','noopener');
+});
+async function manageLink(){
+  if(!editing)throw Error('Apri una prenotazione');
+  const result=await post('/admin/reservations/'+editing.id+'/link',{});
+  return result.manage_url;
+}
+$('#sendManageWa').addEventListener('click',async()=>{
+  if(!editing)return;
+  const popup=window.open('about:blank','_blank');
+  const record=editing;
+  try{
+    const link=await manageLink();
+    const url=waUrl(record,updateText(record,link));
+    if(popup)popup.location.href=url;else window.location.assign(url);
+    toast('WhatsApp pronto. Premi Invia per consegnare il link; il precedente link è stato sostituito.');
+  }catch(e){if(popup)popup.close();toast(e.message,true);}
+});
+$('#copyManageAdmin').addEventListener('click',async()=>{
+  try{
+    const link=await manageLink();
+    await navigator.clipboard.writeText(link);
+    toast('Link personale copiato. Il precedente, se presente, è stato disattivato.');
+  }catch(e){toast(e.message,true);}
+});
+
 checkSession();
