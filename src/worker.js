@@ -1,4 +1,5 @@
 /** Terrazza da Bomber — Cloudflare Worker + D1 + static assets. */
+import { issueLink, customerAction, adminEdit, audit } from './manage.js';
 const ZONE = 'Europe/Rome';
 const ACTIVE = ['pending', 'confirmed', 'seated'];
 const STATUSES = [...ACTIVE, 'cancelled', 'no_show'];
@@ -65,7 +66,7 @@ const insertBooking = async (env, data, source = 'website') => {
   if (betweenDays(data.date) < 0 || betweenDays(data.date) > 90 || (data.date === dayLocal() && mins(data.time) <= mins(nowLocal()) + 60 && source === 'website')) throw Error('Data o orario non disponibile');
   if (data.guests > (source === 'website' ? s.max_guests : 30)) throw Error('Per gruppi numerosi chiamaci direttamente');
   const id = crypto.randomUUID();
-  if (source === 'website' && s.mode === 'request') {
+  if (s.mode === 'request' && (source === 'website' || source === 'staff')) {
     // Request-only workflow: never reserve an unverified example table.
     await env.DB.prepare('INSERT INTO reservations(id,service_date,service_time,guests,customer_name,phone,notes,table_id,source) VALUES(?,?,?,?,?,?,?,NULL,?)')
       .bind(id,data.date,data.time,data.guests,data.name,data.phone,data.notes,source).run();
@@ -103,6 +104,7 @@ async function api(req, env, ctx, p) {
   const method = req.method;
   if (!env.DB) return fail('Database D1 non configurato', 503);
   if (method !== 'GET' && !safeOrigin(req)) return fail('Origine non autorizzata', 403);
+  if (p.startsWith('/api/manage/')) return customerAction(req,env,ctx,p,{rate,sha,getJSON,cfg,sendPush});
   if (p === '/api/health' && method === 'GET') return reply({ ok: true, service: 'Terrazza da Bomber', database: 'connected' });
   if (p === '/api/public' && method === 'GET') { const s = await cfg(env); return reply({ ok: true, booking_enabled: s.booking_enabled, booking_mode: s.mode, max_guests: s.max_guests, slots: s.slots }); }
   if (p === '/api/availability' && method === 'GET') { const q = new URL(req.url).searchParams; const date = q.get('date') || ''; const guests = Number(q.get('guests') || 2); if (!okDate(date) || !Number.isInteger(guests) || guests < 1 || guests > 30) return fail('Data e ospiti non validi'); return reply({ ok: true, ...await availability(env, date, guests) }); }
@@ -113,8 +115,10 @@ async function api(req, env, ctx, p) {
     const ip = req.headers.get('CF-Connecting-IP') || 'unknown';
     if (!await rate(env, 'book:' + await sha(ip + ':' + dayLocal()), 7, 3600)) return fail('Troppe richieste. Riprovare più tardi.', 429);
     const id = await insertBooking(env, validateBooking(data));
+    const manage_url = await issueLink(env,id,new URL(req.url).origin);
+    await audit(env,id,'created','customer',{date:data.date,time:data.time,guests:data.guests});
     ctx.waitUntil(sendPush(env));
-    return reply({ ok: true, id, message: 'Richiesta ricevuta. Attendi la conferma del ristorante.' }, 201);
+    return reply({ ok: true, id, manage_url, message: 'Richiesta ricevuta. Salva il link personale per modificarla o cancellarla.' }, 201);
   }
   if (p === '/api/admin/login' && method === 'POST') {
     if (!env.ADMIN_PASSWORD || env.ADMIN_PASSWORD.length < 14) return fail('Password amministratore non configurata correttamente', 503);
@@ -135,29 +139,42 @@ async function api(req, env, ctx, p) {
     const counts = (await env.DB.prepare("SELECT status,COUNT(*) count FROM reservations WHERE service_date=? GROUP BY status").bind(date).all()).results;
     return reply({ ok: true, date, bookings, tables, settings: await cfg(env), counts, current_date: dayLocal() });
   }
+  if (p === '/api/admin/calendar' && method === 'GET') {
+    const month = new URL(req.url).searchParams.get('month') || dayLocal().slice(0,7);
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return fail('Mese non valido');
+    const results = (await env.DB.prepare(`SELECT service_date AS date,
+       COUNT(*) AS total,
+       SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) AS pending,
+       SUM(CASE WHEN status IN ('confirmed','seated') THEN guests ELSE 0 END) AS covers
+       FROM reservations WHERE service_date LIKE ? AND status NOT IN ('cancelled','no_show')
+       GROUP BY service_date ORDER BY service_date`).bind(month+'-%').all()).results;
+    return reply({ok:true,month,days:results});
+  }
   if (p === '/api/admin/reservations' && method === 'POST') {
     const data = validateBooking(await getJSON(req));
-    const id = await insertBooking(env, data, 'staff'); return reply({ ok: true, id }, 201);
+    const id = await insertBooking(env, data, 'staff');
+    await audit(env,id,'created','staff',{date:data.date,time:data.time,guests:data.guests});
+    return reply({ ok: true, id }, 201);
+  }
+  const share = p.match(/^\/api\/admin\/reservations\/([a-f\d-]{36})\/link$/);
+  if (share && method === 'POST') {
+    const manage_url=await issueLink(env,share[1],new URL(req.url).origin);
+    if(!manage_url)return fail('Prenotazione non trovata',404);
+    await audit(env,share[1],'link_created','staff');
+    return reply({ok:true,manage_url,notice:'Il link precedente, se presente, non sarà più valido.'});
+  }
+  const history = p.match(/^\/api\/admin\/reservations\/([a-f\d-]{36})\/history$/);
+  if (history && method === 'GET') {
+    const rows=(await env.DB.prepare('SELECT action,actor,details,created_at FROM booking_activity WHERE reservation_id=? ORDER BY id DESC LIMIT 35').bind(history[1]).all()).results;
+    return reply({ok:true,items:rows});
   }
   const edit = p.match(/^\/api\/admin\/reservations\/([a-f\d-]{36})$/);
   if (edit && method === 'PATCH') {
-    const input = await getJSON(req), id = edit[1];
-    const old = await env.DB.prepare('SELECT * FROM reservations WHERE id=?').bind(id).first(); if (!old) return fail('Prenotazione non trovata', 404);
-    const status = clean(input.status ?? old.status, 16);
-    if (!STATUSES.includes(status)) return fail('Stato non valido');
-    const suppliedTable = input.table_id === undefined ? old.table_id : input.table_id;
-    const tableId = suppliedTable === null || suppliedTable === '' ? null : Number(suppliedTable);
-    if (tableId !== null && (!Number.isInteger(tableId) || tableId < 1)) return fail('Tavolo non valido');
-    if (status !== 'pending' && ACTIVE.includes(status) && tableId === null) return fail('Assegna prima un tavolo reale per confermare la prenotazione');
-    if (ACTIVE.includes(status) && tableId !== null) {
-      const t = await env.DB.prepare('SELECT * FROM dining_tables WHERE id=? AND active=1').bind(tableId).first();
-      if (!t || t.capacity < old.guests) return fail('Il tavolo non ha posti sufficienti');
-      const s = await cfg(env);
-      const free = await seats(env, old.service_date, old.service_time, old.guests, s.duration, id);
-      if (!free.some(x => x.id === tableId)) return fail('Tavolo già occupato in questa fascia oraria', 409);
-    }
-    const updated = await env.DB.prepare(`UPDATE reservations SET status=?,table_id=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).bind(status, tableId, id).run();
-    return reply({ ok: !!updated.meta?.changes });
+    const input=await getJSON(req);
+    const result=await adminEdit(env,edit[1],input,{cfg});
+    if(!result.ok)return fail(result.error,result.status||400);
+    ctx.waitUntil(sendPush(env));
+    return reply({ok:true,booking:result.booking,needs_whatsapp:result.changed});
   }
   if (p === '/api/admin/tables' && method === 'POST') {
     const d = await getJSON(req), label = clean(d.label, 35), capacity = Number(d.capacity);
