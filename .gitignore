@@ -5,5 +5,4 @@ node_modules/
 .env.*
 !.env.example
 .DS_Store
-public/assets/img/*
-!public/assets/img/.gitkeep
+# Le immagini originali devono essere versionate prima di cambiare DNS.
