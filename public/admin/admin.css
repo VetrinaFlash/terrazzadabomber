@@ -82,3 +82,34 @@ body.edit-open{overflow:hidden}
 @media(max-width:850px){.month-day{min-height:75px;padding:7px 4px}.month-count{font-size:8px}.month-day small{font-size:8px}.month-header{align-items:flex-start}.edit-modal{padding:25px;max-height:92svh}}
 @media(max-width:600px){.month-panel{padding:16px!important}.admin-calendar{gap:3px}.month-weekday{font-size:9px;padding:8px 0}.month-day{min-height:61px;padding:5px 3px;gap:4px}.month-day .day-number{font-size:11px}.month-count{font-size:8px;letter-spacing:-.03em;padding:3px}.month-day small{font-size:8px}.month-controls{width:100%;justify-content:space-between}.month-header h2{font-size:26px}.edit-modal{max-height:94svh;padding:18px;margin:auto}.edit-modal .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.edit-actions{grid-template-columns:1fr}.edit-actions button{font-size:12px}.history-item{flex-direction:column}}
 @media(max-width:370px){.month-count{font-size:7px}.month-day small{display:none}.admin-calendar{gap:2px}.month-day{min-height:52px}}
+
+
+/* Closures — staff can change weekly days, holidays and date ranges after deploy */
+.closure-settings{margin:30px 0;padding:29px;background:#f8faf5;border:1px solid #dce6d9;border-radius:12px}
+.closure-settings-head h3{font:400 31px/1.2 'Playfair Display',Georgia,serif;margin:11px 0;color:#2b5038}
+.closure-settings-head p,.closure-card>p{font-size:12px;line-height:1.75;color:#6e8071;margin:8px 0 20px}
+.closure-card{padding:20px 22px;margin-top:14px;background:#fff;border:1px solid #e0e8de;border-radius:9px}
+.closure-card>strong{font-size:14px;color:#31533a}
+.weekday-options{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.weekday-options label{min-height:43px;display:flex;align-items:center;justify-content:center;gap:6px;background:#f6f7f3;border:1px solid #e1e7df;border-radius:7px;font-size:12px;font-weight:700;color:#3a5b42;cursor:pointer}
+.weekday-options label:has(input:checked){background:#dceadc;border-color:#65916b}
+.weekday-options input{accent-color:#31573f}
+.closure-quick-row,.closure-range-fields{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin:14px 0}
+.closure-quick-row label,.closure-range-fields label{display:flex;flex-direction:column;gap:9px;flex:1;min-width:130px;font-size:10px;letter-spacing:.1em;color:#728373;font-weight:700}
+.closure-quick-row input,.closure-range-fields input{min-height:43px;width:100%;padding:10px;border:1px solid #d4dfd3;background:#fff;color:#304d38;border-radius:5px;font-size:13px}
+.closure-quick-row button,.closure-range-fields button{height:43px;white-space:nowrap}
+.closed-date-chips{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+.closed-date-chip{display:inline-flex;align-items:center;gap:10px;padding:6px 9px;background:#edf2e9;color:#335a3c;border-radius:5px;font-size:12px}
+.closed-date-chip button{border:0;background:none;color:#9c5145;cursor:pointer;font-size:17px;padding:0 2px}
+.closure-card .setting-label{display:block;margin-top:12px;font-size:10px;color:#647b68;letter-spacing:.09em}
+.closure-card .setting-label textarea{display:block;width:100%;max-width:100%;min-height:90px;margin-top:10px;padding:11px;border:1px solid #d6ded4;border-radius:5px;background:#fff;color:#35523d;font-size:13px;letter-spacing:normal}
+.closure-range-item{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid #e9eee7}
+.closure-range-item strong,.closure-range-item small{display:block}
+.closure-range-item strong{font-size:12px;color:#365b40}.closure-range-item small,.closure-no-ranges{font-size:11px;color:#7b8a7f;margin-top:5px}
+.closure-range-item button{border:1px solid #ead9d3;background:#fff8f5;color:#a25043;border-radius:5px;font-size:11px;padding:8px 11px}
+.closure-warning{padding:14px 16px;margin:18px 0 0;border-left:3px solid #b89665;background:#fff7e9;color:#72654b;font-size:12px;line-height:1.8}
+.month-day.is-closed{background:#f9eeea!important;border-color:#e7cbc3!important}
+.month-day .month-closed{font-size:8px;font-weight:800;letter-spacing:.04em;color:#a35246;background:#f7dcd5;padding:4px 5px}
+.month-day.is-closed .day-number{color:#a95b50}
+@media(max-width:800px){.weekday-options{grid-template-columns:repeat(4,minmax(0,1fr))}.closure-settings{padding:19px}.closure-card{padding:15px}.closure-range-fields label{min-width:130px}}
+@media(max-width:500px){.weekday-options{grid-template-columns:repeat(4,minmax(0,1fr))}.weekday-options label{font-size:11px;min-height:41px}.closure-quick-row label,.closure-range-fields label{min-width:100%}.closure-quick-row button,.closure-range-fields button{width:100%}.month-day.is-closed .month-closed{font-size:7px;padding:2px}.closure-settings-head h3{font-size:27px}}
