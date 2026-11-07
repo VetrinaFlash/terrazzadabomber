@@ -12,3 +12,35 @@
 .settings-panel .setting-label small{display:block;margin-top:8px;line-height:1.65;color:#687d6e}
 .booking-row .booking-meta strong{overflow-wrap:anywhere}
 @media(max-width:600px){.booking-actions{gap:10px}.booking-actions .assignment-label{min-width:100%;width:100%}.booking-actions .assign-table{max-width:100%}.settings-panel #bookingMode{font-size:13px}}
+
+
+/* 2026-11: repair the fractured monogram throughout the admin. */
+.admin-monogram,
+.admin-monogram.small {
+  display:inline-flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  white-space:nowrap!important;
+  overflow:hidden;
+  text-align:center;
+  letter-spacing:-.075em!important;
+  line-height:1!important;
+  flex-shrink:0;
+}
+.admin-monogram > span {display:inline!important;margin:0 .12em;color:#c09f67}
+.login-panel{background:#f8f6ef}
+.login-photo{background:radial-gradient(circle at 60% 24%,#769774aa,transparent 55%),#304f3c}
+.login-photo::after{background:linear-gradient(0deg,rgba(25,47,34,.88),rgba(21,39,29,.18) 72%)}
+.login-form-wrap .kicker{color:#69846d;letter-spacing:.13em}
+.login-form-wrap h1{color:#2c4e38}
+.sidebar{background:#284735}
+.nav-tab.active{background:#e5cda5;color:#233f2d}
+.side-brand .admin-monogram{border-color:#d7dec0;color:#f6f3e8}
+.login-help{font-size:12px;line-height:1.65;color:#6a776b;margin:10px 0 0}
+.login-help code{font-size:11px;background:#e7e9dd;padding:2px 4px}
+@media(max-width:600px){
+ .login-form-wrap .admin-monogram{width:65px;height:65px;font-size:27px}
+ .login-panel{padding:52px 24px}
+ .login-form-wrap h1{font-size:clamp(45px,11vw,62px)}
+}
