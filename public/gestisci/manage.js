@@ -122,6 +122,11 @@
         const o=document.createElement('option');o.value=n;o.textContent=n+(n===1?' persona':' persone');guestsInput.append(o);
       }
       render();
+      try {
+        const r=await fetch('/api/public',{cache:'no-store'});
+        const settings=await r.json();
+        if(settings.ok && calendarPicker)calendarPicker.setClosures(settings,false);
+      } catch { /* Server continues to enforce all closures even when dates cannot be shown. */ }
     }catch(e){$('invalidLink').hidden=false;msg(e.message,'error');}
   })();
 })();
