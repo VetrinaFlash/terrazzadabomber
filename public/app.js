@@ -27,6 +27,7 @@ const pad = n => String(n).padStart(2, '0');
 const dateStr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const today = new Date(); const until = new Date(today); until.setDate(until.getDate() + 90);
 dateInput.min = dateStr(today); dateInput.max = dateStr(until); dateInput.value = dateStr(today);
+window.TerrazzaCalendar?.mount({container:'#bookingCalendar',input:'#date'});
 $('#year').textContent = new Date().getFullYear();
 
 window.addEventListener('load', () => { document.body.classList.add('is-loaded'); setTimeout(() => document.querySelector('.preloader')?.remove(), 1200); });
@@ -81,11 +82,32 @@ form.addEventListener('submit', async e => {
   try {
     const res = await fetch('/api/reservations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     const result = await res.json(); if (!res.ok || !result.ok) throw Error(result.error || 'Errore durante la prenotazione');
+    const link=result.manage_url||'';
+    const share=$('#manageLinkActions');
+    if(link){
+      share.hidden=false;
+      $('#manageBookingLink').href=link;
+      $('#shareManageWhatsApp').href='https://api.whatsapp.com/send?text='+encodeURIComponent('Il mio link per gestire la prenotazione da Terrazza da Bomber: '+link);
+      $('#copyManageLink').dataset.link=link;
+    }else{share.hidden=true;}
     $('#successScreen').hidden = false; document.body.classList.add('modal-open');
     form.reset(); dateInput.value = dateStr(new Date()); guestsInput.value = '2'; loadSlots();
     $('#closeSuccess').focus();
   } catch (err) { const message = err.message || 'Impossibile inviare la richiesta. Riprova.'; if (message.includes('tavoli disponibili')) await loadSlots(); errText(message); }
   finally { btn.disabled = false; btn.classList.remove('loading'); }
+});
+$('#copyManageLink').addEventListener('click',async()=>{
+  const link=$('#copyManageLink').dataset.link;
+  if(!link)return;
+  try{
+    await navigator.clipboard.writeText(link);
+    $('#copyManageLink').textContent='✓ Link copiato';
+  }catch{
+    const prompt=document.createElement('input');prompt.value=link;prompt.readOnly=true;document.body.append(prompt);prompt.select();
+    try{document.execCommand('copy');$('#copyManageLink').textContent='✓ Link copiato';}
+    catch{$('#copyManageLink').textContent='Apri il link e salvalo';}
+    prompt.remove();
+  }
 });
 function closeSuccess() { $('#successScreen').hidden = true; document.body.classList.remove('modal-open'); $('#bookingSubmit').focus(); }
 $('#closeSuccess').addEventListener('click', closeSuccess); $('#successOk').addEventListener('click', closeSuccess);
