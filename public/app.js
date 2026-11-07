@@ -27,7 +27,7 @@ const pad = n => String(n).padStart(2, '0');
 const dateStr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const today = new Date(); const until = new Date(today); until.setDate(until.getDate() + 90);
 dateInput.min = dateStr(today); dateInput.max = dateStr(until); dateInput.value = dateStr(today);
-window.TerrazzaCalendar?.mount({container:'#bookingCalendar',input:'#date'});
+const bookingCalendar=window.TerrazzaCalendar?.mount({container:'#bookingCalendar',input:'#date'});
 $('#year').textContent = new Date().getFullYear();
 
 window.addEventListener('load', () => { document.body.classList.add('is-loaded'); setTimeout(() => document.querySelector('.preloader')?.remove(), 1200); });
@@ -66,6 +66,7 @@ async function loadSlots() {
 dateInput.addEventListener('change', loadSlots); guestsInput.addEventListener('change', loadSlots);
 async function initBooking() {
   try { const res = await fetch('/api/public', { cache: 'no-store' }); const json = await res.json(); if (!json.ok) throw Error('offline');
+    bookingCalendar?.setClosures(json,true);
     if (!json.booking_enabled) { $('#bookingUnavailable').hidden = false; form.hidden = true; }
     const max = Math.min(json.max_guests || 8, 12); guestsInput.innerHTML = '';
     for (let n = 1; n <= max; n++) { const option = document.createElement('option'); option.value = n; option.textContent = `${n} ${n === 1 ? 'persona' : 'persone'}`; guestsInput.append(option); }
