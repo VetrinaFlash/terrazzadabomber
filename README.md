@@ -2,6 +2,17 @@
 
 Sito premium, motion editorial, gallery fotografica reale e sistema tavoli per **Terrazza da Bomber**, Scalea (CS). Solo prenotazioni: **nessun e-commerce, pagamenti o commissioni WhatsApp**.
 
+## Novità per la consegna al cliente
+
+- **Calendario pubblico:** il cliente sceglie il giorno e gli orari. I giorni chiusi sono disabilitati.
+- **Link personale:** dopo una prenotazione viene generato un URL segreto `/gestisci/#...` per consultarla, cambiare giorno, ora o coperti e annullarla senza account. Il token non compare in chiaro in D1: è salvato l'hash SHA-256.
+- **Gestione prenotazioni:** calendario mensile nell'admin con conteggi, scheda completa per modificare data, ora, numero di ospiti, stato, nominativo, telefono, note e tavolo. Le assegnazioni vengono controllate contro le sovrapposizioni.
+- **WhatsApp senza abbonamento API:** lo staff apre un messaggio precompilato per confermare o aggiornare il cliente, o per inviargli un nuovo link di gestione; invio manuale dal dispositivo, mai automatico.
+- **Chiusure gestibili dopo il deploy:** dal pannello admin si impostano giorni settimanali di riposo, date straordinarie e periodi di ferie; non richiedono modifiche al codice. Le prenotazioni già presenti non sono annullate automaticamente.
+- **Cronologia:** gli spostamenti, le cancellazioni e le modifiche dello staff sono registrati in D1.
+
+**Una modifica del cliente su una prenotazione confermata la riporta in attesa di riconferma.** In modalità `request` le richieste non assegnano tavoli di esempio: lo staff deve confermare un tavolo reale.
+
 ## Funzionalità
 
 - Sito mobile-first: hero fotografica, animazioni leggere e rispettose di `prefers-reduced-motion`, sezioni editoriali, gallery, indicazioni e contatti reali.
@@ -35,6 +46,8 @@ In **Build variables and secrets** configura le seguenti variabili **come segret
 1. `CLOUDFLARE_API_TOKEN`: token Cloudflare con permessi per Workers Scripts e **D1 Edit** nell'account corretto.
 2. `CLOUDFLARE_ACCOUNT_ID`: ID dell'account Cloudflare.
 3. `ADMIN_PASSWORD`: password amministratore robusta di **almeno 14 caratteri**.
+
+Il comando `npm run deploy` utilizza `wrangler deploy --secrets-file` per pubblicare codice e segreti `ADMIN_PASSWORD` / VAPID **nella stessa versione**. Lo script legacy `set-secrets.mjs` è ora un controllo innocuo: non esegue più tre deploy consecutivi.
 
 La sequenza automatica verifica i test, prova a copiare le fotografie, crea o riutilizza `terrazzadabomber-db`, esegue le migration, pubblica il Worker e imposta la password admin e le chiavi Web Push. Se il vecchio sito non risponde, la copia delle foto avvisa ma **non blocca più il build**. Per vedere subito il sito su `*.workers.dev` non serve connettere il dominio del cliente.
 
