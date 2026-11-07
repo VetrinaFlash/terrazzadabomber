@@ -8,7 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { writeFileSync, unlinkSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 
-const password = process.env.ADMIN_PASSWORD;
+const password = (process.env.ADMIN_PASSWORD || '').trim();
 if (!password || password.length < 14) {
   throw new Error(
     'ADMIN_PASSWORD mancante o più corta di 14 caratteri. '+
