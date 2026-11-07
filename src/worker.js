@@ -1,5 +1,6 @@
 /** Terrazza da Bomber — Cloudflare Worker + D1 + static assets. */
 import { issueLink, customerAction, adminEdit, audit } from './manage.js';
+import { isClosed, closureLabel, validateClosures } from './closures.js';
 const ZONE = 'Europe/Rome';
 const ACTIVE = ['pending', 'confirmed', 'seated'];
 const STATUSES = [...ACTIVE, 'cancelled', 'no_show'];
@@ -27,7 +28,7 @@ const authorised = async (req, env) => Boolean(await verify(session(req), env));
 const secureCookie = (req, value, age) => `tdb_session=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${age}${new URL(req.url).protocol === 'https:' ? '; Secure' : ''}`;
 const safeOrigin = req => { const origin = req.headers.get('Origin'); if (origin) return origin === new URL(req.url).origin; const referer = req.headers.get('Referer'); return Boolean(referer && new URL(referer).origin === new URL(req.url).origin); };
 const getJSON = async req => { if (Number(req.headers.get('content-length') || 0) > 7000) throw Error('Richiesta troppo grande'); const text = await req.text(); if (text.length > 7000) throw Error('Richiesta troppo grande'); return JSON.parse(text || '{}'); };
-const cfg = async env => { const r = await env.DB.prepare('SELECT key, value FROM settings').all(); const data = Object.fromEntries(r.results.map(x => [x.key, x.value])); return { booking_enabled: data.booking_enabled === 'true', mode: data.booking_mode === 'auto' ? 'auto' : 'request', slots: JSON.parse(data.booking_slots || '[]'), duration: Number(data.duration_minutes || 120), max_guests: Number(data.max_guests || 8), closed_dates: JSON.parse(data.closed_dates || '[]') }; };
+const cfg = async env => { const r = await env.DB.prepare('SELECT key, value FROM settings').all(); const data = Object.fromEntries(r.results.map(x => [x.key, x.value])); return { booking_enabled: data.booking_enabled === 'true', mode: data.booking_mode === 'auto' ? 'auto' : 'request', slots: JSON.parse(data.booking_slots || '[]'), duration: Number(data.duration_minutes || 120), max_guests: Number(data.max_guests || 8), closed_dates: JSON.parse(data.closed_dates || '[]'), closed_weekdays: JSON.parse(data.closed_weekdays || '[]'), closed_periods: JSON.parse(data.closed_periods || '[]') }; };
 const seats = async (env, date, slot, guests, duration, exclude = '') => {
   const end = slotEnd(slot, duration);
   const r = await env.DB.prepare(`SELECT t.id,t.label,t.capacity FROM dining_tables t WHERE t.active=1 AND t.capacity>=? AND NOT EXISTS (SELECT 1 FROM reservations r WHERE r.table_id=t.id AND r.service_date=? AND r.status IN ('pending','confirmed','seated') AND r.service_time < ? AND (CAST(substr(r.service_time,1,2) AS INTEGER)*60+CAST(substr(r.service_time,4,2) AS INTEGER)+?) > ? AND r.id<>?) ORDER BY t.capacity ASC,t.position ASC`).bind(guests, date, end, duration, mins(slot), exclude).all();
@@ -35,7 +36,7 @@ const seats = async (env, date, slot, guests, duration, exclude = '') => {
 };
 const availability = async (env, date, guests) => {
   const s = await cfg(env);
-  if (!s.booking_enabled || s.closed_dates.includes(date) || betweenDays(date) < 0 || betweenDays(date) > 90 || guests > s.max_guests) return { slots: [], enabled: s.booking_enabled, duration: s.duration };
+  if (!s.booking_enabled || isClosed(s,date) || betweenDays(date) < 0 || betweenDays(date) > 90 || guests > s.max_guests) return { slots: [], enabled: s.booking_enabled, duration: s.duration };
   const available = [];
   for (const time of s.slots) {
     if (date === dayLocal() && mins(time) <= mins(nowLocal()) + 60) continue;
@@ -61,7 +62,7 @@ const validateBooking = data => {
 };
 const insertBooking = async (env, data, source = 'website') => {
   const s = await cfg(env);
-  if (source === 'website' && (!s.booking_enabled || s.closed_dates.includes(data.date))) throw Error('Prenotazioni non disponibili per questa data');
+  if (source === 'website' && (!s.booking_enabled || isClosed(s,data.date))) throw Error('Il ristorante è chiuso per questa data');
   if (!s.slots.includes(data.time) && source === 'website') throw Error('Orario non disponibile');
   if (betweenDays(data.date) < 0 || betweenDays(data.date) > 90 || (data.date === dayLocal() && mins(data.time) <= mins(nowLocal()) + 60 && source === 'website')) throw Error('Data o orario non disponibile');
   if (data.guests > (source === 'website' ? s.max_guests : 30)) throw Error('Per gruppi numerosi chiamaci direttamente');
@@ -106,7 +107,7 @@ async function api(req, env, ctx, p) {
   if (method !== 'GET' && !safeOrigin(req)) return fail('Origine non autorizzata', 403);
   if (p.startsWith('/api/manage/')) return customerAction(req,env,ctx,p,{rate,sha,getJSON,cfg,sendPush});
   if (p === '/api/health' && method === 'GET') return reply({ ok: true, service: 'Terrazza da Bomber', database: 'connected' });
-  if (p === '/api/public' && method === 'GET') { const s = await cfg(env); return reply({ ok: true, booking_enabled: s.booking_enabled, booking_mode: s.mode, max_guests: s.max_guests, slots: s.slots }); }
+  if (p === '/api/public' && method === 'GET') { const s = await cfg(env); return reply({ ok: true, booking_enabled: s.booking_enabled, booking_mode: s.mode, max_guests: s.max_guests, slots: s.slots, closed_dates:s.closed_dates, closed_weekdays:s.closed_weekdays, closed_periods:s.closed_periods }); }
   if (p === '/api/availability' && method === 'GET') { const q = new URL(req.url).searchParams; const date = q.get('date') || ''; const guests = Number(q.get('guests') || 2); if (!okDate(date) || !Number.isInteger(guests) || guests < 1 || guests > 30) return fail('Data e ospiti non validi'); return reply({ ok: true, ...await availability(env, date, guests) }); }
   if (p === '/api/reservations' && method === 'POST') {
     const data = await getJSON(req);
@@ -148,7 +149,7 @@ async function api(req, env, ctx, p) {
        SUM(CASE WHEN status IN ('confirmed','seated') THEN guests ELSE 0 END) AS covers
        FROM reservations WHERE service_date LIKE ? AND status NOT IN ('cancelled','no_show')
        GROUP BY service_date ORDER BY service_date`).bind(month+'-%').all()).results;
-    return reply({ok:true,month,days:results});
+    return reply({ok:true,month,days:results,closures:await cfg(env)});
   }
   if (p === '/api/admin/reservations' && method === 'POST') {
     const data = validateBooking(await getJSON(req));
@@ -187,13 +188,26 @@ async function api(req, env, ctx, p) {
     return reply({ ok: true });
   }
   if (p === '/api/admin/settings' && method === 'POST') {
-    const d = await getJSON(req), max = Number(d.max_guests), duration = Number(d.duration), slots = d.slots, closed = d.closed_dates;
+    const d=await getJSON(req);
+    const max=Number(d.max_guests), duration=Number(d.duration), slots=d.slots;
     if (!Number.isInteger(max) || max < 1 || max > 30 || ![60,90,120,150,180].includes(duration)) return fail('Impostazioni non valide');
-    if (!Array.isArray(slots) || slots.length < 1 || slots.length > 20 || slots.some(x => !okTime(x)) || new Set(slots).size !== slots.length) return fail('Fasce orarie non valide');
-    if (!Array.isArray(closed) || closed.length > 120 || closed.some(x => !okDate(x))) return fail('Date di chiusura non valide');
+    if (!Array.isArray(slots) || slots.length<1 || slots.length>20 || slots.some(x=>!okTime(x)) || new Set(slots).size!==slots.length) return fail('Fasce orarie non valide');
     if (d.booking_mode && !['request','auto'].includes(d.booking_mode)) return fail('Modalità prenotazioni non valida');
-    await env.DB.batch([['booking_enabled', String(d.booking_enabled === true)], ['booking_mode',d.booking_mode === 'auto' ? 'auto' : 'request'], ['booking_slots', JSON.stringify(slots.sort())], ['duration_minutes', String(duration)], ['max_guests', String(max)], ['closed_dates', JSON.stringify(closed)]].map(([k,v]) => env.DB.prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(k,v)));
-    return reply({ ok: true });
+    let closures;
+    try { closures=validateClosures(d); } catch(err) { return fail(err.message); }
+    const values=[
+      ['booking_enabled',String(d.booking_enabled===true)],
+      ['booking_mode',d.booking_mode==='auto'?'auto':'request'],
+      ['booking_slots',JSON.stringify([...slots].sort())],
+      ['duration_minutes',String(duration)],
+      ['max_guests',String(max)],
+      ['closed_dates',JSON.stringify(closures.closed_dates)],
+      ['closed_weekdays',JSON.stringify(closures.closed_weekdays)],
+      ['closed_periods',JSON.stringify(closures.closed_periods)]
+    ];
+    await env.DB.batch(values.map(([key,value])=>env.DB.prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(key,value)));
+    // Existing reservations are not cancelled automatically; they remain visible in the agenda.
+    return reply({ok:true,message:'Orari e chiusure salvati. Le prenotazioni già inserite non vengono annullate automaticamente.'});
   }
   if (p === '/api/admin/push' && method === 'POST') {
     if (!env.VAPID_PUBLIC_KEY) return fail('Push non configurate', 503);
@@ -215,7 +229,7 @@ export default {
     if (url.pathname === '/admin') return Response.redirect(url.origin + '/admin/', 308);
     if (url.pathname.startsWith('/api/')) {
       try { return await api(req, env, ctx, url.pathname.replace(/\/$/, '')); }
-      catch (err) { console.error('API', err); return fail(err instanceof SyntaxError ? 'Dati non validi' : (['Richiesta troppo grande','Seleziona data e orario validi','Numero ospiti non valido','Inserisci nome e cognome','Inserisci un telefono valido','Prenotazioni non disponibili per questa data','Orario non disponibile','Data o orario non disponibile','Per gruppi numerosi chiamaci direttamente','Non ci sono tavoli disponibili per questo orario'].includes(err.message) ? err.message : 'Operazione non riuscita. Riprova.'), err.message === 'Non ci sono tavoli disponibili per questo orario' ? 409 : 400); }
+      catch (err) { console.error('API', err); return fail(err instanceof SyntaxError ? 'Dati non validi' : (['Richiesta troppo grande','Seleziona data e orario validi','Numero ospiti non valido','Inserisci nome e cognome','Inserisci un telefono valido','Prenotazioni non disponibili per questa data','Il ristorante è chiuso per questa data','Orario non disponibile','Data o orario non disponibile','Per gruppi numerosi chiamaci direttamente','Non ci sono tavoli disponibili per questo orario'].includes(err.message) ? err.message : 'Operazione non riuscita. Riprova.'), err.message === 'Non ci sono tavoli disponibili per questo orario' ? 409 : 400); }
     }
     if (url.pathname.startsWith('/admin/')) {
       const res = await env.ASSETS.fetch(req);
