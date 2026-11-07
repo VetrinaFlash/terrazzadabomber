@@ -213,6 +213,21 @@ $('#editForm').addEventListener('submit',async e=>{
     const updated=await api('/admin/reservations/'+editing.id,{method:'PATCH',body:JSON.stringify(data)});
     const id=editing.id;
     toast('Prenotazione aggiornata. Puoi avvisare il cliente su WhatsApp.');
+    if(updated.booking){
+      // Keep the latest values even if the booking moved to another day and is
+      // no longer included in the currently selected agenda.
+      editing={
+        ...editing,
+        service_date:updated.booking.date,
+        service_time:updated.booking.time,
+        guests:updated.booking.guests,
+        customer_name:updated.booking.name,
+        phone:updated.booking.phone,
+        notes:updated.booking.notes,
+        status:updated.booking.status,
+        table_id:updated.booking.table_id
+      };
+    }
     await refresh();
     const fresh=dashboard?.bookings.find(x=>x.id===id);
     if(fresh)editing=fresh;
