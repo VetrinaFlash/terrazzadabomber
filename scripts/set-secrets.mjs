@@ -1,9 +1,10 @@
 /**
- * Legacy post-deploy step retained for backward-compatible Workers Builds commands.
- * Secrets are now uploaded ATOMICALLY by npm run deploy (deploy-with-secrets.mjs).
+ * Kept for compatibility with the existing Cloudflare Workers Builds command:
+ *   npm run prepare:cloudflare && npm run migrate:remote &&
+ *   npm run deploy && node scripts/set-secrets.mjs
+ *
+ * Do not read or rotate ADMIN_PASSWORD from the build environment.
+ * Production credentials are configured directly on the Worker and
+ * preserved by Wrangler deploy --keep-vars.
  */
-const value=process.env.ADMIN_PASSWORD;
-if(!value || value.length<14){
-  throw new Error('ADMIN_PASSWORD non configurata nei segreti di build di Cloudflare (almeno 14 caratteri)');
-}
-console.log('Secret admin e VAPID già installati con npm run deploy. Nessuna seconda pubblicazione necessaria.');
+console.log('Secret Production invariati: password admin e chiavi Web Push non modificate.');
