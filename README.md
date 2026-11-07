@@ -41,15 +41,16 @@ In **Cloudflare → Workers & Pages → terrazzadabomber → Settings → Build*
 | Build output directory | **Nessuna**: non è Pages |
 
 Cloudflare installa automaticamente le dipendenze prima del build.
-In **Build variables and secrets** configura le seguenti variabili **come segreti di build**, non nel repository:
+In **Build variables and secrets** configura soltanto le credenziali **di build** (non nel repository):
 
 1. `CLOUDFLARE_API_TOKEN`: token Cloudflare con permessi per Workers Scripts e **D1 Edit** nell'account corretto.
 2. `CLOUDFLARE_ACCOUNT_ID`: ID dell'account Cloudflare.
-3. `ADMIN_PASSWORD`: password amministratore robusta di **almeno 14 caratteri**.
 
-Il comando `npm run deploy` utilizza `wrangler deploy --secrets-file` per pubblicare codice e segreti `ADMIN_PASSWORD` / VAPID **nella stessa versione**. Lo script legacy `set-secrets.mjs` è ora un controllo innocuo: non esegue più tre deploy consecutivi.
+**Non aggiungere `ADMIN_PASSWORD` fra i segreti di build.** La password è già stata impostata dal titolare come secret **runtime** in **Worker → Settings → Variables and Secrets → Production**. La password dev'essere lunga almeno 14 caratteri, e non bisogna ruotarla o cambiarla durante i deploy. I segreti di build non possono leggere i valori runtime.
 
-La sequenza automatica verifica i test, prova a copiare le fotografie, crea o riutilizza `terrazzadabomber-db`, esegue le migration, pubblica il Worker e imposta la password admin e le chiavi Web Push. Se il vecchio sito non risponde, la copia delle foto avvisa ma **non blocca più il build**. Per vedere subito il sito su `*.workers.dev` non serve connettere il dominio del cliente.
+Il comando `npm run deploy` ora esegue `wrangler deploy --keep-vars`, mantenendo la password admin e le eventuali chiavi Web Push già configurate in Production. Lo script compatibile `set-secrets.mjs` non richiede più `ADMIN_PASSWORD` né modifica alcun secret. Questo risolve l'errore `ADMIN_PASSWORD mancante o più corta di 14 caratteri` che bloccava le pubblicazioni, mentre l'admin continuava a funzionare.
+
+La sequenza automatica verifica i test, prova a copiare le fotografie, crea o riutilizza `terrazzadabomber-db`, esegue le migration e pubblica il Worker **senza toccare i secret Production**. Se il vecchio sito non risponde, la copia delle foto avvisa ma **non blocca più il build**. Per vedere subito il sito su `*.workers.dev` non serve connettere il dominio del cliente.
 
 ### Importante: salvare le foto autentiche prima di cambiare DNS
 
