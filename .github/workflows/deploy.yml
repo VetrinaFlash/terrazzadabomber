@@ -1,7 +1,6 @@
 name: Deploy Terrazza da Bomber (Workers + D1)
 on:
-  push:
-    branches: [main]
+  # Backup manuale: il deploy automatico è gestito da Cloudflare Workers Builds
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,7 +17,7 @@ jobs:
           node-version: '22'
       - run: npm install --no-audit --no-fund
       - run: npm test
-      - name: Backup photographs from original website into deployment bundle
+      - name: Best-effort download of original photographs
         run: npm run photos
       - name: Verify deployment credentials
         env:
