@@ -1,3 +1,4 @@
+import { isClosed } from './closures.js';
 /** Secure self-service booking management for Cloudflare Workers + D1. */
 const safe = (v, n = 120) => String(v ?? '').trim().slice(0, n);
 const dateOK = d => /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(d + 'T12:00:00Z')) && new Date(d + 'T12:00:00Z').toISOString().slice(0, 10) === d;
@@ -55,7 +56,7 @@ export async function customerAction(request,env,ctx,path,helpers){
   const settings=await helpers.cfg(env);
   if(!settings.booking_enabled)return error('Le modifiche online sono temporaneamente sospese. Contatta il ristorante.',409);
   if(guests>settings.max_guests)return error('Per gruppi numerosi contatta il ristorante');
-  if(!settings.slots.includes(time)||settings.closed_dates.includes(date))return error('Orario o data non disponibili',409);
+  if(!settings.slots.includes(time)||isClosed(settings,date))return error('Il ristorante è chiuso o non accetta richieste in quell’orario',409);
   if(daysFromToday(date)<0||daysFromToday(date)>90||(date===dayItaly()&&min(time)<=min(clockItaly())+60))return error('Questa data o questo orario non è più prenotabile',409);
   if(date===booking.service_date && time===booking.service_time && guests===booking.guests)return json({ok:true,booking:publicRecord(booking),message:'Non hai effettuato modifiche'});
   // A change must be reconfirmed by staff. Never reserve an example table silently.
