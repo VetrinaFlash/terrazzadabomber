@@ -3,6 +3,7 @@
   const token = decodeURIComponent(location.hash.replace(/^#/, '').replace(/^token=/, ''));
   let booking=null;
   let time='';
+  let calendarPicker=null;
   const msg=(text,type='')=>{const n=$('message');n.textContent=text;n.className=type;};
   const pad=x=>String(x).padStart(2,'0');
   const italyDay=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Rome',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
@@ -60,7 +61,8 @@
     $('manageDate').min=today;
     $('manageDate').max=max;
     if(active){
-      window.TerrazzaCalendar.mount({container:'#manageCalendar',input:'#manageDate'});
+      if(!calendarPicker)calendarPicker=window.TerrazzaCalendar.mount({container:'#manageCalendar',input:'#manageDate'});
+      else dateInput.dispatchEvent(new Event('change',{bubbles:true}));
       loadSlots();
     }else{$('manageCalendar').hidden=true;}
     msg('');
