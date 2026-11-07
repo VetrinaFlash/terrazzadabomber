@@ -26,7 +26,7 @@ const authorised = async (req, env) => Boolean(await verify(session(req), env));
 const secureCookie = (req, value, age) => `tdb_session=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${age}${new URL(req.url).protocol === 'https:' ? '; Secure' : ''}`;
 const safeOrigin = req => { const origin = req.headers.get('Origin'); if (origin) return origin === new URL(req.url).origin; const referer = req.headers.get('Referer'); return Boolean(referer && new URL(referer).origin === new URL(req.url).origin); };
 const getJSON = async req => { if (Number(req.headers.get('content-length') || 0) > 7000) throw Error('Richiesta troppo grande'); const text = await req.text(); if (text.length > 7000) throw Error('Richiesta troppo grande'); return JSON.parse(text || '{}'); };
-const cfg = async env => { const r = await env.DB.prepare('SELECT key, value FROM settings').all(); const data = Object.fromEntries(r.results.map(x => [x.key, x.value])); return { booking_enabled: data.booking_enabled === 'true', slots: JSON.parse(data.booking_slots || '[]'), duration: Number(data.duration_minutes || 120), max_guests: Number(data.max_guests || 8), closed_dates: JSON.parse(data.closed_dates || '[]') }; };
+const cfg = async env => { const r = await env.DB.prepare('SELECT key, value FROM settings').all(); const data = Object.fromEntries(r.results.map(x => [x.key, x.value])); return { booking_enabled: data.booking_enabled === 'true', mode: data.booking_mode === 'auto' ? 'auto' : 'request', slots: JSON.parse(data.booking_slots || '[]'), duration: Number(data.duration_minutes || 120), max_guests: Number(data.max_guests || 8), closed_dates: JSON.parse(data.closed_dates || '[]') }; };
 const seats = async (env, date, slot, guests, duration, exclude = '') => {
   const end = slotEnd(slot, duration);
   const r = await env.DB.prepare(`SELECT t.id,t.label,t.capacity FROM dining_tables t WHERE t.active=1 AND t.capacity>=? AND NOT EXISTS (SELECT 1 FROM reservations r WHERE r.table_id=t.id AND r.service_date=? AND r.status IN ('pending','confirmed','seated') AND r.service_time < ? AND (CAST(substr(r.service_time,1,2) AS INTEGER)*60+CAST(substr(r.service_time,4,2) AS INTEGER)+?) > ? AND r.id<>?) ORDER BY t.capacity ASC,t.position ASC`).bind(guests, date, end, duration, mins(slot), exclude).all();
@@ -38,6 +38,7 @@ const availability = async (env, date, guests) => {
   const available = [];
   for (const time of s.slots) {
     if (date === dayLocal() && mins(time) <= mins(nowLocal()) + 60) continue;
+    if (s.mode === 'request') { available.push(time); continue; }
     const tables = await seats(env, date, time, guests, s.duration);
     if (tables.length) available.push(time);
   }
@@ -64,6 +65,12 @@ const insertBooking = async (env, data, source = 'website') => {
   if (betweenDays(data.date) < 0 || betweenDays(data.date) > 90 || (data.date === dayLocal() && mins(data.time) <= mins(nowLocal()) + 60 && source === 'website')) throw Error('Data o orario non disponibile');
   if (data.guests > (source === 'website' ? s.max_guests : 30)) throw Error('Per gruppi numerosi chiamaci direttamente');
   const id = crypto.randomUUID();
+  if (source === 'website' && s.mode === 'request') {
+    // Request-only workflow: never reserve an unverified example table.
+    await env.DB.prepare('INSERT INTO reservations(id,service_date,service_time,guests,customer_name,phone,notes,table_id,source) VALUES(?,?,?,?,?,?,?,NULL,?)')
+      .bind(id,data.date,data.time,data.guests,data.name,data.phone,data.notes,source).run();
+    return id;
+  }
   // Single atomic INSERT SELECT, so concurrent requests cannot claim the same table.
   const result = await env.DB.prepare(`INSERT INTO reservations(id,service_date,service_time,guests,customer_name,phone,notes,table_id,source) SELECT ?,?,?,?,?,?,?,t.id,? FROM dining_tables t WHERE t.active=1 AND t.capacity>=? AND NOT EXISTS (SELECT 1 FROM reservations r WHERE r.table_id=t.id AND r.service_date=? AND r.status IN ('pending','confirmed','seated') AND r.service_time < ? AND (CAST(substr(r.service_time,1,2) AS INTEGER)*60+CAST(substr(r.service_time,4,2) AS INTEGER)+?) > ?) ORDER BY t.capacity ASC,t.position ASC LIMIT 1`).bind(id, data.date, data.time, data.guests, data.name, data.phone, data.notes, source, data.guests, data.date, slotEnd(data.time, s.duration), s.duration, mins(data.time)).run();
   if (!result.meta?.changes) throw Error('Non ci sono tavoli disponibili per questo orario');
@@ -97,7 +104,7 @@ async function api(req, env, ctx, p) {
   if (!env.DB) return fail('Database D1 non configurato', 503);
   if (method !== 'GET' && !safeOrigin(req)) return fail('Origine non autorizzata', 403);
   if (p === '/api/health' && method === 'GET') return reply({ ok: true, service: 'Terrazza da Bomber', database: 'connected' });
-  if (p === '/api/public' && method === 'GET') { const s = await cfg(env); return reply({ ok: true, booking_enabled: s.booking_enabled, max_guests: s.max_guests, slots: s.slots }); }
+  if (p === '/api/public' && method === 'GET') { const s = await cfg(env); return reply({ ok: true, booking_enabled: s.booking_enabled, booking_mode: s.mode, max_guests: s.max_guests, slots: s.slots }); }
   if (p === '/api/availability' && method === 'GET') { const q = new URL(req.url).searchParams; const date = q.get('date') || ''; const guests = Number(q.get('guests') || 2); if (!okDate(date) || !Number.isInteger(guests) || guests < 1 || guests > 30) return fail('Data e ospiti non validi'); return reply({ ok: true, ...await availability(env, date, guests) }); }
   if (p === '/api/reservations' && method === 'POST') {
     const data = await getJSON(req);
@@ -138,9 +145,11 @@ async function api(req, env, ctx, p) {
     const old = await env.DB.prepare('SELECT * FROM reservations WHERE id=?').bind(id).first(); if (!old) return fail('Prenotazione non trovata', 404);
     const status = clean(input.status ?? old.status, 16);
     if (!STATUSES.includes(status)) return fail('Stato non valido');
-    const tableId = input.table_id === undefined ? old.table_id : Number(input.table_id);
-    if (!Number.isInteger(tableId) || tableId < 1) return fail('Tavolo non valido');
-    if (ACTIVE.includes(status)) {
+    const suppliedTable = input.table_id === undefined ? old.table_id : input.table_id;
+    const tableId = suppliedTable === null || suppliedTable === '' ? null : Number(suppliedTable);
+    if (tableId !== null && (!Number.isInteger(tableId) || tableId < 1)) return fail('Tavolo non valido');
+    if (status !== 'pending' && ACTIVE.includes(status) && tableId === null) return fail('Assegna prima un tavolo reale per confermare la prenotazione');
+    if (ACTIVE.includes(status) && tableId !== null) {
       const t = await env.DB.prepare('SELECT * FROM dining_tables WHERE id=? AND active=1').bind(tableId).first();
       if (!t || t.capacity < old.guests) return fail('Il tavolo non ha posti sufficienti');
       const s = await cfg(env);
@@ -165,7 +174,8 @@ async function api(req, env, ctx, p) {
     if (!Number.isInteger(max) || max < 1 || max > 30 || ![60,90,120,150,180].includes(duration)) return fail('Impostazioni non valide');
     if (!Array.isArray(slots) || slots.length < 1 || slots.length > 20 || slots.some(x => !okTime(x)) || new Set(slots).size !== slots.length) return fail('Fasce orarie non valide');
     if (!Array.isArray(closed) || closed.length > 120 || closed.some(x => !okDate(x))) return fail('Date di chiusura non valide');
-    await env.DB.batch([['booking_enabled', String(d.booking_enabled === true)], ['booking_slots', JSON.stringify(slots.sort())], ['duration_minutes', String(duration)], ['max_guests', String(max)], ['closed_dates', JSON.stringify(closed)]].map(([k,v]) => env.DB.prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(k,v)));
+    if (d.booking_mode && !['request','auto'].includes(d.booking_mode)) return fail('Modalità prenotazioni non valida');
+    await env.DB.batch([['booking_enabled', String(d.booking_enabled === true)], ['booking_mode',d.booking_mode === 'auto' ? 'auto' : 'request'], ['booking_slots', JSON.stringify(slots.sort())], ['duration_minutes', String(duration)], ['max_guests', String(max)], ['closed_dates', JSON.stringify(closed)]].map(([k,v]) => env.DB.prepare('INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(k,v)));
     return reply({ ok: true });
   }
   if (p === '/api/admin/push' && method === 'POST') {
