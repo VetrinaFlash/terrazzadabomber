@@ -6,7 +6,7 @@ import worker from '../src/worker.js';
 
 function mockDatabase() {
   const sqlite = new DatabaseSync(':memory:');
-  for (const file of ['0001_initial.sql', '0002_requests_mode.sql', '0003_client_management.sql']) {
+  for (const file of ['0001_initial.sql', '0002_requests_mode.sql', '0003_client_management.sql', '0004_closing_days.sql']) {
     sqlite.exec(readFileSync(new URL('../migrations/' + file, import.meta.url), 'utf8'));
   }
   const DB = {
@@ -152,4 +152,40 @@ test('admin sees month totals, edits guest count and date, generates rotated lin
   const history=await read(await worker.fetch(req('/api/admin/reservations/'+created.data.id+'/history','GET',null,cookie),env,ctx));
   assert.equal(history.status,200);
   assert.ok(history.data.items.some(i=>i.action==='updated'));
+});
+
+
+test('staff can change weekly rest days, exceptional closures and vacation periods without redeploying',async()=>{
+  const {DB,sqlite}=mockDatabase(),env=envFor(DB);
+  const login=await read(await worker.fetch(req('/api/admin/login','POST',{password}),env,ctx));
+  assert.equal(login.status,200);
+  const cookie=login.headers.get('set-cookie').split(';')[0];
+  const date=futureDate();
+  const weekday=new Date(date+'T12:00:00Z').getUTCDay()||7;
+  const after=new Date(date+'T12:00:00Z');after.setUTCDate(after.getUTCDate()+2);
+  const holiday=after.toISOString().slice(0,10);
+  const save=async(extra)=>await read(await worker.fetch(req('/api/admin/settings','POST',{
+    booking_enabled:true,booking_mode:'request',max_guests:8,duration:120,
+    slots:['19:00','20:00','21:00'],closed_dates:[],closed_weekdays:[],closed_periods:[],...extra
+  },cookie),env,ctx));
+  const updated=await save({closed_weekdays:[weekday],closed_dates:[holiday],
+    closed_periods:[{from:holiday,to:holiday,label:'Ferie estive'}]});
+  assert.equal(updated.status,200,JSON.stringify(updated.data));
+  const cfg=await read(await worker.fetch(req('/api/public'),env,ctx));
+  assert.equal(cfg.status,200);
+  assert.ok(cfg.data.closed_weekdays.includes(weekday));
+  assert.equal(sqlite.prepare("SELECT value FROM settings WHERE key='closed_weekdays'").get().value,'['+weekday+']');
+  const blocked=await read(await worker.fetch(req('/api/availability?date='+date+'&guests=2'),env,ctx));
+  assert.equal(blocked.data.slots.length,0);
+  const booking=await read(await worker.fetch(req('/api/reservations','POST',{
+    date,time:'20:00',guests:2,name:'Anna Rossi',phone:'3332866829',privacy:true
+  }),env,ctx));
+  assert.equal(booking.status,400);
+  const month=await read(await worker.fetch(req('/api/admin/calendar?month='+date.slice(0,7),'GET',null,cookie),env,ctx));
+  assert.equal(month.status,200);
+  assert.ok(month.data.closures.closed_dates.includes(holiday));
+  const reopened=await save({});
+  assert.equal(reopened.status,200);
+  const available=await read(await worker.fetch(req('/api/availability?date='+date+'&guests=2'),env,ctx));
+  assert.ok(available.data.slots.includes('20:00'),JSON.stringify(available.data));
 });
