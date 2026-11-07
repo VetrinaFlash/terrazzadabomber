@@ -189,3 +189,48 @@ test('staff can change weekly rest days, exceptional closures and vacation perio
   const available=await read(await worker.fetch(req('/api/availability?date='+date+'&guests=2'),env,ctx));
   assert.ok(available.data.slots.includes('20:00'),JSON.stringify(available.data));
 });
+
+
+test('customers cannot move a reservation into a newly closed day',async()=>{
+  const {DB,sqlite}=mockDatabase(),env=envFor(DB),date=futureDate();
+  const booked=await read(await worker.fetch(req('/api/reservations','POST',{
+    date,time:'20:00',guests:2,name:'Customer Move',phone:'3332866829',privacy:true
+  }),env,ctx));
+  assert.equal(booked.status,201,JSON.stringify(booked.data));
+  const token=booked.data.manage_url.split('#')[1];
+  const closed=new Date(date+'T12:00:00Z');closed.setUTCDate(closed.getUTCDate()+1);
+  const closedDate=closed.toISOString().slice(0,10);
+  const login=await read(await worker.fetch(req('/api/admin/login','POST',{password}),env,ctx));
+  const cookie=login.headers.get('set-cookie').split(';')[0];
+  const settings=await read(await worker.fetch(req('/api/admin/settings','POST',{
+    booking_enabled:true,booking_mode:'request',max_guests:8,duration:120,
+    slots:['20:00','20:30','21:00'],closed_dates:[closedDate],
+    closed_weekdays:[],closed_periods:[]
+  },cookie),env,ctx));
+  assert.equal(settings.status,200,JSON.stringify(settings.data));
+  const changed=await read(await worker.fetch(req('/api/manage/update','POST',{
+    token,date:closedDate,time:'20:00',guests:3
+  }),env,ctx));
+  assert.equal(changed.status,409,JSON.stringify(changed.data));
+  const current=sqlite.prepare('SELECT service_date,guests FROM reservations WHERE id=?').get(booked.data.id);
+  assert.equal(current.service_date,date);
+  assert.equal(current.guests,2);
+});
+test('staff cannot confirm two simultaneous reservations on the same table',async()=>{
+  const {DB}=mockDatabase(),env=envFor(DB),date=futureDate();
+  const bookings=[];
+  for(let i=0;i<2;i++){
+    const result=await read(await worker.fetch(req('/api/reservations','POST',{
+      date,time:'20:00',guests:2,name:'Guest Number '+i,phone:'3332866829',privacy:true
+    }),env,ctx));
+    assert.equal(result.status,201,JSON.stringify(result.data));
+    bookings.push(result.data.id);
+  }
+  const login=await read(await worker.fetch(req('/api/admin/login','POST',{password}),env,ctx));
+  const cookie=login.headers.get('set-cookie').split(';')[0];
+  const edit=async(id,table_id)=>read(await worker.fetch(req('/api/admin/reservations/'+id,'PATCH',{status:'confirmed',table_id},cookie),env,ctx));
+  assert.equal((await edit(bookings[0],1)).status,200);
+  const blocked=await edit(bookings[1],1);
+  assert.equal(blocked.status,409,JSON.stringify(blocked.data));
+  assert.equal((await edit(bookings[1],2)).status,200);
+});
