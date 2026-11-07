@@ -11,11 +11,16 @@ const slotsNode = $('#timeSlots');
 const bookingMessage = $('#bookingMessage');
 let requestSeq = 0;
 
-// Safety net while images are being copied from the previous site during deployment.
+// Visual fallback until original images are permanently archived in public/assets/img.
+// Never retry infinitely if an old image is no longer reachable after a DNS change.
 document.querySelectorAll('img[data-fallback]').forEach(img => img.addEventListener('error', function () {
-  if (this.dataset.triedFallback) return;
-  this.dataset.triedFallback = '1';
-  this.src = 'https://terrazzadabomber.it/assets/img/' + encodeURIComponent(this.dataset.fallback);
+  if (!this.dataset.triedFallback) {
+    this.dataset.triedFallback = '1';
+    this.src = 'https://terrazzadabomber.it/assets/img/' + encodeURIComponent(this.dataset.fallback);
+    return;
+  }
+  this.style.opacity = '0';
+  this.closest('.frame-image, .taste-img, .hero-image-wrap, .booking-visual, .gallery-layout > div')?.classList.add('photo-unavailable');
 }));
 
 const pad = n => String(n).padStart(2, '0');
