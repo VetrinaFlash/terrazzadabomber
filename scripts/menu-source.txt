@@ -1,0 +1,188 @@
+# Menu Tipiko — fonte: app ufficiale (tipikoamanteapp.framework360.site), novembre 2026.
+# Formato: "@ Sezione" / "# Categoria | descrizione" / "- Nome | descrizione | prezzo [| noorder]"
+# Usato da scripts/build-menu-sql.py per generare la migration 0005.
+
+@ Ristorante
+# Antipasti dal Mediterraneo | Il pescato del nostro mare
+- Alici ripiene (3 pz) |  | 6,00
+- Insalata di mare | Calamari, gamberi, seppia, cozze, sedano e carote | 12,00
+- Cruditè | In base al pescato del giorno | 24,00
+- "U pignatiallu" | Zuppetta di calamaretti in crosta di pane | 11,00
+- Il polpo brasato | Polpo brasato alla birra su crema di zucca e funghi porcini *Senza glutine | 16,00
+- Tris di crudo | Tagliatella di seppia al limone, tartare di tonno agli agrumi, tartare di gambero rosso e fragole | 18,00
+# Antipasti del territorio | Il meglio della Calabria
+- Tagliere di formaggi | Selezione di formaggi caprini e pecorini del territorio, accompagnati da marmellate di nostra produzione *Vegetariano | 12,00
+- Buona Calabria | Selezione di salumi, formaggi e prodotti esclusivamente del territorio calabrese | 14,00
+- Tartare di manzo Podolica | Tartare di manzo podolica, capperi, olive, acciughe e olio EVO | 16,00
+# Primi dal Mediterraneo |
+- Stroncatura alle sarde, pomodori secchi, capperi e pane profumato |  | 14,00
+- Tonnarelli agli scampi, datterino giallo, zafferano e stracciatella |  | 20,00
+- Calamarata al gambero rosso e zest di limone |  | 18,00
+- Linguina al ragù di ricciola e basilico |  | 16,00
+- Cavatelli alle cozze, 'nduja e pane tostato |  | 16,00
+# Primi del territorio |
+- Spaghettone al ragù con polpette di mamma "Carmela" |  | 12,00
+- Calamarata con crema di peperoni, guanciale e ricotta affumicata |  | 14,00
+- Ravioli di manzo al burro tartufato e salvia |  | 15,00
+# Secondi dal Mediterraneo |
+- Frittura di calamari |  | 18,00
+- Frittura mista |  | 22,00
+- Parmigiana di spada su crema di peperone giallo |  | 18,00
+- Grigliata mista | In base al pescato del giorno | 26,00
+- Pepata di cozze |  | 13,00
+# Secondi del territorio |
+- Tagliata di manzo con patate al forno | 250/300 g | 18,00
+- Filetto di maialino nero di Calabria | Avvolto nel guanciale su crema di patate e verdura di stagione | 18,00
+- Cime di rape e salsiccia |  | 9,00
+- Filetto di manzo e crostone di caciocavallo | Prezzo per 100 g di prodotto (9 € l'etto): ordinabile solo al tavolo | 9,00 | noorder
+# Contorni |
+- Patate fritte | *Vegano | 4,50
+- Patate "mbacchiuse" | *Vegano | 5,00
+- Insalata mista | Lattuga, radicchio, rucola, carote, cetrioli *Vegano | 5,00
+- Insalata verde | *Vegano | 4,00
+- Insalata di stagione | Finocchio, arancia, olive nere, olio EVO *Vegano | 5,00
+- Verdure grigliate | *Vegano | 5,00
+# Frutta |
+- Frutta di stagione |  | 5,00
+- Sorbetto |  | 3,00
+# Dolci | Fatti in casa
+- Cheesecake |  | 5,50
+- Tiramisù |  | 5,50
+- Tortino al "bocconotto di Amantea" |  | 5,50
+- Dolce del giorno | In base alla fantasia dello chef | 5,50
+- Tartufo gelato | Gusti: nocciola, pistacchio, mandorla & pistacchio | 5,50
+
+@ Pizzeria
+# Stuzzicheria |
+- Crocchè di patate (3 pz) |  | 5,00
+- Polpette | Melanzane, 'nduja, salsiccia | 5,00
+# I Coccoli di Tipiko | Impasto della pizza fritto, condito al momento
+- Coccoli classici | Pomodorini, olive verdi schiacciate, scaglie di parmigiano, origano, olio EVO, basilico | 9,00
+- Coccoli crudaioli | Prosciutto crudo nero di Calabria, cubetti di fiordilatte, origano, olio EVO, basilico | 9,00
+- Coccoli bufalotti | Mozzarella di bufala, acciughe, olive nere, origano, olio EVO, basilico | 9,00
+- Coccoli al profumo di mare | Ragù di moscardino, olive nere, olio EVO e basilico | 12,00
+- Coccoli al pistacchio | Crema di pistacchio, zucchero a velo, granella di nocciole *Dolce | 10,00
+- Coccoli alla Nutella | Nutella, zucchero a velo, granella di nocciole *Dolce | 10,00
+# Pizze stagionali | Le proposte del momento
+- La Fresca | Pomodorino pachino IGP, fiordilatte, pesto di basilico, scaglie di grana, pancetta, olio EVO, basilico | 10,00
+- Alla zucca | Fiordilatte, crema di zucca, salsiccia stagionata, ricotta affumicata, basilico e olio EVO | 9,00
+- Contadina | Fiordilatte, cime di rape "da Mantia", salsiccia fresca sbriciolata di suino, olio EVO, basilico | 12,00
+- Pinna Gialla | Fiordilatte, datterino giallo, filetti di tonno, stracciatella e cipolla in agrodolce | 14,00
+- Frutti di mare | Pomodoro, calamari, cozze, gamberi, seppie, scampi | 18,00
+- Pizza d'Ottobre | Mozzarella fiordilatte, pomodoro pachino, scarola, acciughe e pane profumato | 12,00
+- "Mò mi scialu" | Mozzarella di bufala, pancetta, ricotta affumicata e melanzana fritta | 14,00
+# Pizze classiche |
+- Focaccia | Olio extravergine d'oliva e origano *Vegano | 3,00
+- Marinara | Passata di pomodoro, origano, aglio, olio EVO, basilico *Vegano | 4,50
+- Marinara 2.0 | Passata di pomodoro, origano, aglio, acciughe da 'Mantia, olive nere infornate, olio EVO, basilico | 8,00
+- Regina margherita | Passata di pomodoro, fiordilatte, olio EVO, basilico *Vegetariano | 6,00
+- Golosa | Fiordilatte, pomodoro secco, stracciatella e pepe nero, olio EVO, basilico *Vegetariano | 9,00
+- Reginella | Passata di pomodoro, stracciatella di bufala, olio EVO, basilico *Vegetariano | 9,00
+- Napoletana | Passata di pomodoro, fiordilatte, acciughe, capperi, olio EVO, origano, basilico | 9,00
+- Tonno e cipolla | Passata di pomodoro, fiordilatte, tonno, cipolla di Tropea, olio EVO, basilico | 9,00
+- Quattro stagioni | Passata di pomodoro, fiordilatte, prosciutto cotto, carciofi, funghi e olive verdi, olio EVO, basilico | 10,00
+- Quattro formaggi | Fiordilatte, caciocavallo, gorgonzola, scamorza affumicata, riccioli di ricotta salata, erborinato, olio EVO, basilico *Vegetariano | 10,00
+- Tipiko | Pomodorini pachino IGP, fiordilatte, caciocavallo, pesto di rucola, prosciutto crudo nero di Calabria, olio EVO, basilico | 12,00
+- Alla rucola | Pomodorini pachino IGP, fiordilatte, rucola, scaglie di ricotta salata, olio EVO, basilico *Vegetariano | 10,00
+- Bufalina | Passata di pomodoro, mozzarella di bufala, olio EVO, basilico *Vegetariano | 9,00
+- Verace | Pomodoro pachino IGP, bocconcini di bufala, acciughe, olive nere, olio EVO, basilico | 10,00
+- KM zero | Fiordilatte, verdure miste di stagione (chiedi al personale) *Vegetariano | 8,00
+- Cardinale | Passata di pomodoro, fiordilatte, prosciutto cotto e funghi champignon, olio EVO, basilico | 9,00
+- Calabra | Passata di pomodoro, fiordilatte, 'nduja, salame dolce, olio EVO, basilico *Piccante | 9,00
+- Chiazzitana | Passata di pomodoro, fiordilatte, melanzane fritte, ricotta affumicata, olio EVO, basilico *Vegetariano | 9,00
+- Americana | Passata di pomodoro, fiordilatte, patatine fritte, wurstel, olio EVO | 8,00
+- Sfiziosa | Fiordilatte, prosciutto cotto, crocchè sbriciolata, olio EVO, basilico | 9,00
+- Silana | Fiordilatte, patate silane, pancetta affumicata, caciocavallo, origano, olio EVO, basilico | 9,00
+- Montanara | Passata di pomodoro, fiordilatte, pancetta affumicata, funghi champignon, riccioli di ricotta affumicata, olio EVO, basilico | 10,00
+- Deliziosa | Passata di pomodoro, fiordilatte, prosciutto cotto, ricotta fresca, olio EVO, basilico | 9,00
+- Alla mollica | Fiordilatte, pane profumato, acciughe "da 'Mantia", olio EVO, basilico | 9,00
+
+@ Beverage
+# Birre artigianali | Birrificio calabrese
+- CALA "Passione" Lager | 4,8% vol · 33 cl | 5,00
+- CALA "Euforia" American IPA | 6,7% vol · 33 cl | 5,50
+- CALA "Delirio" Bock | 7,2% vol · 33 cl | 5,50
+- CALA "Nirvana" Weizen | 4,5% vol · 33 cl | 5,50
+- CALA "Citrusina" Blanche al cedro | 4,6% vol · 33 cl | 5,50
+- CALA "IGA Statti" Greco nero | 9% vol · 33 cl | 8,00
+- MAGNA GRECIA "Beta" Blond Ale | 4,9% vol · 75 cl | 18,00
+- MAGNA GRECIA "Gaglioppa" IGA | 6,9% vol · 75 cl | 18,00
+# Bibite |
+- MoleCola | Vetro 0,33 l | 3,00
+- MoleCola Zero | Vetro 0,33 l | 3,00
+- Aranciata | Bio San Bernardo 0,26 l | 2,50
+- Gassosa | Bio San Bernardo 0,26 l | 2,50
+- Acqua minerale naturale | Bottiglia in vetro 0,75 l | 2,00
+- Acqua minerale gassata | Bottiglia in vetro 0,75 l | 2,00
+- Acqua Ferrarelle | Bottiglia in vetro 0,75 l | 2,00
+- San Pellegrino | Bottiglia in vetro 0,33 l | 3,00
+# Birre alla spina | Disponibili al tavolo
+- Angelo Poretti 4 Luppoli Originale piccola | 5,5% vol · 0,20 l | 3,00 | noorder
+- Angelo Poretti 4 Luppoli Originale media | 5,5% vol · 0,40 l | 4,50 | noorder
+- Angelo Poretti 9 Luppoli American IPA piccola | 5,9% vol · 0,20 l | 3,50 | noorder
+- Angelo Poretti 9 Luppoli American IPA media | 5,9% vol · 0,40 l | 5,50 | noorder
+
+@ Carta dei vini
+# Cirò Vumbaca |
+- Cirò rosso superiore | Gaglioppo | 22,00
+- Cirò rosato | Gaglioppo | 22,00
+- Cirò bianco | Greco bianco | 22,00
+# Berlucchi |
+- Satèn | Chardonnay | 35,00
+- Rosè | Pinot nero 70%, Chardonnay 30% | 35,00
+# Cantine Benvenuto |
+- Celeste | Calabrese · 13% | 26,00
+- Terra | Magliocco, Greco nero · 14% | 26,00
+- Mare | Zibibbo, Malvasia · 12,5% | 26,00
+- Zibibbo | Zibibbo · 13% | 30,00
+- Orange | Zibibbo · 13% | 26,00
+- Mishalai (Brut) | Zibibbo, Malvasia · 12% | 24,00
+# Caparra & Siciliani |
+- Chardonnay | Chardonnay · 13% | 22,00
+- Pecorello | Pecorello · 12,5% | 22,00
+# Cantine Ceraudo |
+- Petelia | Greco bianco, Montonico · 13,5% | 26,00
+- Grayasusi Rame | Gaglioppo · 13% | 26,00
+- Nanà | Gaglioppo, Magliocco · 13% | 26,00
+# Magna Graecia |
+- Bianco Gaudio | Pecorello, Chardonnay · 14% | 25,00
+- Rosato Gaudio | Magliocco, Merlot · 14% | 25,00
+- Rosso Gaudio | Magliocco, Merlot · 14,5% | 25,00
+- Bianco Baronè | Pecorello · 14% | 30,00
+- Rosso Baronè | Guarnaccia nera · 14,5% | 30,00
+# Masseria Falvo |
+- Pircoca | Guarnaccia, Riesling, Traminer, Moscato, Malvasia · 14% | 22,00
+- Donna Filomena | Guarnaccia bianca · 14% | 24,00
+- Cyviz | Magliocco dolce · 13% | 22,00
+- Yumi | Pecorello · 14% | 22,00
+- Cirés | Magliocco dolce · 14% | 22,00
+- Orange | Pecorello | 24,00
+# Cantine De Mare |
+- Pecorello matto | Pecorello · 14% | 24,00
+- Due dita | Magliocco 90%, Greco nero 10% | 26,00
+- Amarillo | Gaglioppo · 13% | 26,00
+# Russo & Longo |
+- Ois | Pecorello · 13% | 26,00
+- Malvasia e Sauvignon | Malvasia, Sauvignon · 13% | 24,00
+- Balhoo | Greco bianco · 11% | 22,00
+- Colli di Ginestra | Gaglioppo · 12,5% | 22,00
+- Virgani | Gaglioppo, Magliocco · 13,5% | 22,00
+- Alma Risa | Gaglioppo · 12,5% | 24,00
+# Giraldi & Giraldi |
+- Donna Giuliana | Magliocco dolce, Greco nero · 13% | 20,00
+- Monaci | Magliocco · 14,5% | 20,00
+- Arinthia | Greco bianco, Chardonnay · 12,5% | 20,00
+- Don Onofrio | Magliocco, Cabernet Sauvignon · 14,5% | 28,00
+# Serracavallo |
+- Settechiese | Magliocco dolce 60%, Cabernet Sauvignon 30%, Merlot 10% · 13,5% | 20,00
+- Petramola | Pecorello 50%, Chardonnay 50% · 14,5% | 24,00
+- Don Filì | Magliocco dolce · 13% | 24,00
+- Quattro lustri | Magliocco dolce · 14% | 24,00
+- Filovento | Greco bianco, Pecorello, Riesling · 12,5% | 26,00
+# Serre di Pederiva |
+- Tribus (frizzante) | Glera · 10,5% | 22,00
+# Cantine Santa Venere |
+- Vescovado | Guardiavalle · 13% | 24,00
+- Scassabarile | Marsigliana nera · 12,5% | 25,00
+- Vurgadà | Nerello Cappuccio · 14,5% | 26,00
+- Speziale | Marsigliana nera · 12,5% | 25,00

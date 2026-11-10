@@ -1,0 +1,24 @@
+.track-page{min-height:100vh}
+.track{max-width:680px;margin:auto;padding:32px 16px 80px}
+.track-card{background:var(--paper);border:1px solid var(--line);border-radius:28px;padding:28px 22px;box-shadow:var(--shadow)}
+.track h1{font-size:clamp(30px,6vw,42px)}
+.track h1 span{color:var(--wine)}
+.track-when{font-size:17px;font-weight:700;color:var(--brown-2);margin:8px 0 22px}
+.progress{list-style:none;margin:0 0 18px;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.progress li{font-size:11.5px;font-weight:800;color:var(--muted);padding-top:10px;border-top:4px solid var(--line);line-height:1.3}
+.progress li.done{color:var(--ok);border-color:var(--ok)}
+.progress li.current{color:var(--wine);border-color:var(--wine)}
+.track-status{padding:14px 16px;border-radius:14px;background:var(--cream);font-weight:700;margin-bottom:8px}
+.track-status.bad{background:#fde9e7;color:#9b2a1d}
+.track-status.good{background:#e4f3ea;color:#1f5e39}
+.track-section{border-top:1px solid var(--line);margin-top:22px;padding-top:18px}
+.track-section h2{font-size:22px;margin-bottom:12px}
+.track-items{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:8px}
+.track-items li{display:flex;justify-content:space-between;gap:12px}
+.track-items small{display:block;color:var(--muted)}
+.track-data{display:grid;gap:10px;margin:0}
+.track-data div{display:grid;grid-template-columns:120px 1fr;gap:10px}
+.track-data dt{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.track-data dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.track-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.track-foot{font-size:13px;color:var(--muted);margin:18px 0 0}

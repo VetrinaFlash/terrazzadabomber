@@ -1,4 +1,5 @@
-/** Terrazza da Bomber — Cloudflare Worker + D1 + static assets. */
+/** Tipiko Ristorante Pizzeria — Cloudflare Worker + D1 + static assets (ordini online + prenotazioni). */
+import { handleOrders, publicInfo, cleanupOrders } from './orders.js';
 import { issueLink, customerAction, adminEdit, audit } from './manage.js';
 import { isClosed, closureLabel, validateClosures } from './closures.js';
 const ZONE = 'Europe/Rome';
@@ -27,7 +28,7 @@ const session = req => (req.headers.get('Cookie') || '').split(';').map(s => s.t
 const authorised = async (req, env) => Boolean(await verify(session(req), env));
 const secureCookie = (req, value, age) => `tdb_session=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${age}${new URL(req.url).protocol === 'https:' ? '; Secure' : ''}`;
 const safeOrigin = req => { const origin = req.headers.get('Origin'); if (origin) return origin === new URL(req.url).origin; const referer = req.headers.get('Referer'); return Boolean(referer && new URL(referer).origin === new URL(req.url).origin); };
-const getJSON = async req => { if (Number(req.headers.get('content-length') || 0) > 7000) throw Error('Richiesta troppo grande'); const text = await req.text(); if (text.length > 7000) throw Error('Richiesta troppo grande'); return JSON.parse(text || '{}'); };
+const getJSON = async (req, max = 7000) => { if (Number(req.headers.get('content-length') || 0) > max) throw Error('Richiesta troppo grande'); const text = await req.text(); if (text.length > max) throw Error('Richiesta troppo grande'); const data = JSON.parse(text || '{}'); if (!data || typeof data !== 'object' || Array.isArray(data)) throw new SyntaxError('Dati non validi'); return data; };
 const cfg = async env => { const r = await env.DB.prepare('SELECT key, value FROM settings').all(); const data = Object.fromEntries(r.results.map(x => [x.key, x.value])); return { booking_enabled: data.booking_enabled === 'true', mode: data.booking_mode === 'auto' ? 'auto' : 'request', slots: JSON.parse(data.booking_slots || '[]'), duration: Number(data.duration_minutes || 120), max_guests: Number(data.max_guests || 8), closed_dates: JSON.parse(data.closed_dates || '[]'), closed_weekdays: JSON.parse(data.closed_weekdays || '[]'), closed_periods: JSON.parse(data.closed_periods || '[]') }; };
 const seats = async (env, date, slot, guests, duration, exclude = '') => {
   const end = slotEnd(slot, duration);
@@ -91,7 +92,7 @@ async function sendPush(env) {
       let jwt = aud.get(url.origin);
       if (!jwt) {
         const head = b64(utf8(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
-        const payload = b64(utf8(JSON.stringify({ aud: url.origin, exp: Math.floor(Date.now()/1000)+ 3600, sub: 'mailto:bomberspecial95@gmail.com' })));
+        const payload = b64(utf8(JSON.stringify({ aud: url.origin, exp: Math.floor(Date.now()/1000)+ 3600, sub: 'mailto:tipiko.amantea@gmail.com' })));
         const sig = new Uint8Array(await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, utf8(head + '.' + payload)));
         jwt = head + '.' + payload + '.' + b64(sig); aud.set(url.origin, jwt);
       }
@@ -106,8 +107,10 @@ async function api(req, env, ctx, p) {
   if (!env.DB) return fail('Database D1 non configurato', 503);
   if (method !== 'GET' && !safeOrigin(req)) return fail('Origine non autorizzata', 403);
   if (p.startsWith('/api/manage/')) return customerAction(req,env,ctx,p,{rate,sha,getJSON,cfg,sendPush});
-  if (p === '/api/health' && method === 'GET') return reply({ ok: true, service: 'Terrazza da Bomber', database: 'connected' });
-  if (p === '/api/public' && method === 'GET') { const s = await cfg(env); return reply({ ok: true, booking_enabled: s.booking_enabled, booking_mode: s.mode, max_guests: s.max_guests, slots: s.slots, closed_dates:s.closed_dates, closed_weekdays:s.closed_weekdays, closed_periods:s.closed_periods }); }
+  const ordersResponse = await handleOrders(req, env, ctx, p, { rate, sha, getJSON, sendPush, authorised });
+  if (ordersResponse) return ordersResponse;
+  if (p === '/api/health' && method === 'GET') return reply({ ok: true, service: 'Tipiko Ristorante Pizzeria', database: 'connected' });
+  if (p === '/api/public' && method === 'GET') { const s = await cfg(env); return reply({ ok: true, booking_enabled: s.booking_enabled, booking_mode: s.mode, max_guests: s.max_guests, slots: s.slots, closed_dates:s.closed_dates, closed_weekdays:s.closed_weekdays, closed_periods:s.closed_periods, ...await publicInfo(env) }); }
   if (p === '/api/availability' && method === 'GET') { const q = new URL(req.url).searchParams; const date = q.get('date') || ''; const guests = Number(q.get('guests') || 2); if (!okDate(date) || !Number.isInteger(guests) || guests < 1 || guests > 30) return fail('Data e ospiti non validi'); return reply({ ok: true, ...await availability(env, date, guests) }); }
   if (p === '/api/reservations' && method === 'POST') {
     const data = await getJSON(req);
@@ -222,7 +225,7 @@ async function api(req, env, ctx, p) {
 export default {
   async scheduled(event, env) {
     if (!env.DB) return;
-    await env.DB.batch([env.DB.prepare("DELETE FROM reservations WHERE service_date < date('now','-90 days')"), env.DB.prepare("DELETE FROM request_limits WHERE expires_at < unixepoch()")]);
+    await env.DB.batch([env.DB.prepare("DELETE FROM reservations WHERE service_date < date('now','-90 days')"), env.DB.prepare("DELETE FROM request_limits WHERE expires_at < unixepoch()"), cleanupOrders(env)]);
   },
   async fetch(req, env, ctx) {
     const url = new URL(req.url);

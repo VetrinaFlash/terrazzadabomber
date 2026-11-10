@@ -1,0 +1,117 @@
+/* Tipiko — gestionale ordini, menu e impostazioni */
+.login-logo{width:210px;height:auto;margin-bottom:18px}
+.side-logo{width:52px;height:auto;filter:brightness(0) invert(1);flex-shrink:0}
+.side-brand>span{letter-spacing:.14em}
+.nav-tab{position:relative}
+.nav-badge{margin-left:auto;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#c8323f;color:#fff;font-size:11px;font-weight:800;display:inline-grid;place-items:center;animation:badgePulse 1.6s infinite}
+@keyframes badgePulse{50%{box-shadow:0 0 0 6px rgba(200,50,63,.18)}}
+.text-button{background:none;border:0;font-weight:700;color:#8f2430}
+
+/* Orders */
+.orders-alert{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#8f2430;color:#fff;border-radius:12px;padding:14px 18px;margin-bottom:18px;box-shadow:0 14px 30px -18px rgba(143,36,48,.9)}
+.orders-alert strong{font-size:15px}
+.orders-alert .primary{background:#fff;color:#8f2430;border-color:#fff}
+.upcoming{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px}
+.upcoming .tiny-title{margin-right:6px}
+.upcoming-day{border:1px solid #eadfd2;background:#fff;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;text-transform:capitalize}
+.upcoming-day b{background:#8f2430;color:#fff;border-radius:999px;padding:1px 7px;margin-left:4px;font-size:11px}
+.upcoming-day.active{border-color:#2b130a;background:#2b130a;color:#fff}
+.order-list{display:grid;gap:14px;margin-top:6px}
+.order-card{background:#fff;border:1px solid #eadfd2;border-left:5px solid #c9bfba;border-radius:12px;padding:16px 18px;display:grid;gap:12px}
+.order-card.status-pending{border-left-color:#d19d51;box-shadow:0 10px 28px -20px rgba(209,157,81,.9)}
+.order-card.status-confirmed,.order-card.status-preparing{border-left-color:#8f2430}
+.order-card.status-ready,.order-card.status-out_for_delivery{border-left-color:#2c7046}
+.order-card.is-muted{opacity:.62}
+.order-card header{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:start}
+.order-time strong{display:block;font:600 26px/1 'Playfair Display',serif}
+.order-time .type{display:inline-block;margin-top:6px;font-size:11px;font-weight:800;padding:4px 8px;border-radius:999px;background:#f8f2ea;color:#5a2a17}
+.order-time .type.delivery{background:#e8f2f9;color:#285580}
+.order-who{display:flex;flex-direction:column;gap:2px;min-width:0}
+.order-who strong{font-size:16px}
+.order-who a{color:#8f2430;font-weight:700;font-size:13px}
+.order-who .addr{color:#2b1a12;font-weight:600;overflow-wrap:anywhere}
+.order-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;text-align:right}
+.order-meta small{color:#817874;font-size:11px}
+.order-total{font-size:18px}
+.order-items{list-style:none;margin:0;padding:12px 14px;background:#fbf8f4;border-radius:10px;display:grid;gap:6px;font-size:14px}
+.order-items li{display:flex;gap:6px}
+.order-items li span{margin-left:auto;font-weight:700;white-space:nowrap}
+.order-items em{color:#8f2430;font-style:normal;font-weight:700}
+.order-items .fee{color:#817874;border-top:1px dashed #eadfd2;padding-top:6px}
+.order-notes{margin:0;padding:10px 12px;border-radius:8px;background:#fff7e9;color:#7a4b12;font-weight:600;font-size:13px}
+.order-card footer{justify-content:flex-start}
+.order-card .confirm-action{background:#2b130a!important;color:#fff!important;border-color:#2b130a!important}
+.pill.preparing{color:#8f2430;background:#f9e8e3}
+.pill.ready,.pill.out_for_delivery,.pill.completed{color:#1f5e39;background:#e4f3ea}
+.pill.rejected{color:#9a3d31;background:#f7dcd5}
+.orders-tools{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid #eadfd2}
+.sound-toggle{flex-direction:row;align-items:center;gap:8px;font-size:12px;letter-spacing:0}
+.sound-toggle input,.check input{width:18px;height:18px;min-height:0;accent-color:#8f2430}
+
+/* Menu admin */
+.menu-admin-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.menu-admin-tools input{width:220px}
+.menu-admin-sections{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.menu-admin-sections b{font-weight:800;opacity:.6;margin-left:3px}
+.menu-admin{display:grid;gap:22px;margin-top:14px}
+.menu-admin-cat{border:1px solid #eadfd2;border-radius:12px;overflow:hidden;background:#fff}
+.menu-admin-cat.is-muted{opacity:.6}
+.menu-admin-cat-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 16px;background:#fbf8f4;border-bottom:1px solid #eadfd2}
+.menu-admin-cat-head h3{margin:0;font:600 20px 'Playfair Display',serif}
+.menu-admin-cat-head small{color:#817874}
+.menu-admin-cat-head div:last-child{display:flex;gap:6px}
+.outline.small{padding:8px 11px;font-size:11px}
+.menu-admin-item{display:grid;grid-template-columns:1fr auto auto auto;gap:14px;align-items:center;padding:12px 16px;border-bottom:1px solid #f3ece4}
+.menu-admin-item:last-child{border-bottom:0}
+.menu-admin-item.is-off .mai-text,.menu-admin-item.is-off .mai-price{opacity:.45}
+.mai-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mai-text small{color:#817874;font-size:12px}
+.mai-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.mai-tags .pill{padding:3px 8px;font-size:10px;background:#f8f2ea;color:#5a2a17}
+.mai-tags .pill.pending{color:#94631f;background:#faf1de}
+.mai-price{white-space:nowrap}
+.edit-action{background:#fff;border:1px solid #eadfd2;border-radius:6px;padding:8px 11px;font-weight:700}
+.tag-picker{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px 14px}
+.tag-picker legend{font-size:11px;font-weight:700;letter-spacing:.06em;margin-bottom:8px}
+.check-row{display:grid;gap:10px}
+.check{flex-direction:row!important;align-items:center;gap:8px!important;font-size:13px!important;letter-spacing:0!important;font-weight:600!important}
+.danger-link{background:none;border:0;color:#9a3d31;font-weight:700;font-size:12px;text-decoration:underline;padding:6px 0}
+
+/* Settings */
+.order-settings{display:grid;gap:22px}
+.order-settings .panel{display:grid;gap:16px}
+.order-settings h2{margin:0}
+.os-grid{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))!important}
+
+/* Print: comanda per stampante termica / A4 */
+.print-area{display:none}
+@media print{
+  body>*:not(.print-area){display:none!important}
+  .print-area{display:block!important;font:13px/1.35 'Courier New',monospace;color:#000}
+  .ticket{width:72mm;padding:2mm;page-break-after:always}
+  .ticket h1{font:800 20px 'Courier New',monospace;text-align:center;margin:0 0 4px}
+  .ticket .big{font-size:16px;font-weight:800;margin:2px 0}
+  .ticket p{margin:3px 0}
+  .ticket hr{border:0;border-top:1px dashed #000;margin:6px 0}
+  .ticket table{width:100%;border-collapse:collapse}
+  .ticket td{vertical-align:top;padding:2px 0}
+  .ticket .q{width:9mm;font-weight:800}
+  .ticket .p{text-align:right;white-space:nowrap}
+}
+
+@media(max-width:850px){.nav-badge{position:absolute;top:6px;right:8px;font-size:9px!important;min-width:18px;height:18px}}
+@media(max-width:740px){
+  .order-card header{grid-template-columns:auto 1fr}
+  .order-meta{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between;text-align:left}
+  .menu-admin-item{grid-template-columns:1fr auto auto;gap:10px}
+  .menu-admin-item .mai-price{grid-column:1;grid-row:2;font-size:14px}
+  .menu-admin-cat-head{flex-direction:column;align-items:flex-start}
+  .menu-admin-tools input{width:100%}
+}
+@media(max-width:600px){
+  .sidebar nav{overflow-x:auto;scrollbar-width:none;justify-content:flex-start!important;gap:2px}
+  .nav-tab{width:auto!important;flex:1 0 62px;font-size:8.5px!important;white-space:nowrap}
+  .nav-tab span{font-size:18px!important}
+  .orders-alert{flex-direction:column;align-items:stretch}
+}
+.topbar-actions .new-booking-action[hidden]{display:none!important}

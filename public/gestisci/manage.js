@@ -95,17 +95,17 @@
     const stampEnd=new Date(booking.date+'T'+booking.time+':00');
     stampEnd.setMinutes(stampEnd.getMinutes()+120);
     const end=pad(stampEnd.getFullYear())+pad(stampEnd.getMonth()+1)+pad(stampEnd.getDate())+'T'+pad(stampEnd.getHours())+pad(stampEnd.getMinutes())+'00';
-    const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Terrazza da Bomber//Prenotazioni//IT','BEGIN:VEVENT',
-      'UID:'+crypto.randomUUID()+'@terrazzadabomber.it',
+    const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Tipiko Ristorante Pizzeria//Prenotazioni//IT','BEGIN:VEVENT',
+      'UID:'+crypto.randomUUID()+'@tipiko-amantea',
       'DTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''),
       'DTSTART;TZID=Europe/Rome:'+stamp,
       'DTEND;TZID=Europe/Rome:'+end,
-      'SUMMARY:Cena · Terrazza da Bomber',
-      'LOCATION:Via Vittorio Emanuele III 3\\, Scalea',
+      'SUMMARY:Tavolo da Tipiko',
+      'LOCATION:Via S. Bernardino 1\\, 87032 Amantea (CS)',
       'DESCRIPTION:Prenotazione confermata per '+booking.guests+' persone',
       'END:VEVENT','END:VCALENDAR'].join('\r\n');
     const url=URL.createObjectURL(new Blob([ics],{type:'text/calendar;charset=utf-8'}));
-    const a=document.createElement('a');a.href=url;a.download='terrazza-da-bomber.ics';document.body.append(a);a.click();a.remove();
+    const a=document.createElement('a');a.href=url;a.download='tipiko-prenotazione.ics';document.body.append(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
   dateInput.addEventListener('change',loadSlots);

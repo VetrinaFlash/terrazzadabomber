@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
+Disallow: /gestisci/
+Disallow: /ordine/
 Disallow: /api/
-Sitemap: https://terrazzadabomber.it/sitemap.xml

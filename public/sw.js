@@ -1,6 +1,6 @@
 self.addEventListener('push',event=>{
   event.waitUntil((async()=>{
-    await self.registration.showNotification('Terrazza da Bomber · Nuova prenotazione',{body:'Hai una nuova richiesta di prenotazione. Apri il gestionale per controllare i dettagli.',icon:'/favicon.svg',badge:'/favicon.svg',tag:'terrazza-new-booking',renotify:true,data:{url:'/admin/'}});
+    await self.registration.showNotification('Tipiko · Nuova attività',{body:'Nuovo ordine online o richiesta di prenotazione. Apri il gestionale per i dettagli.',icon:'/favicon.svg',badge:'/favicon.svg',tag:'tipiko-new-activity',renotify:true,requireInteraction:true,data:{url:'/admin/'}});
     const clients=await self.clients.matchAll({type:'window',includeUncontrolled:true});for(const client of clients)client.postMessage({type:'BOOKING_PUSH'});
   })());
 });

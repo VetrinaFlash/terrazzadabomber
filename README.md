@@ -1,34 +1,42 @@
-# Terrazza da Bomber — Experience & Reservations
+# Tipiko Ristorante Pizzeria — Sito, ordini online e prenotazioni
 
-Sito premium, motion editorial, gallery fotografica reale e sistema tavoli per **Terrazza da Bomber**, Scalea (CS). Solo prenotazioni: **nessun e-commerce, pagamenti o commissioni WhatsApp**.
+Sito ufficiale di **Tipiko Ristorante Pizzeria**, Via S. Bernardino 1, Amantea (CS). Cloudflare Workers + Static Assets + D1.
+Il repository e il database (`terrazzadabomber`, `terrazzadabomber-db`) sono stati riconvertiti per Tipiko: **stesso Worker, stesso D1, stesso branch `main`**.
 
-## Novità per la consegna al cliente
+## Cosa fa
 
-- **Calendario pubblico:** il cliente sceglie il giorno e gli orari. I giorni chiusi sono disabilitati.
-- **Link personale:** dopo una prenotazione viene generato un URL segreto `/gestisci/#...` per consultarla, cambiare giorno, ora o coperti e annullarla senza account. Il token non compare in chiaro in D1: è salvato l'hash SHA-256.
-- **Gestione prenotazioni:** calendario mensile nell'admin con conteggi, scheda completa per modificare data, ora, numero di ospiti, stato, nominativo, telefono, note e tavolo. Le assegnazioni vengono controllate contro le sovrapposizioni.
-- **WhatsApp senza abbonamento API:** lo staff apre un messaggio precompilato per confermare o aggiornare il cliente, o per inviargli un nuovo link di gestione; invio manuale dal dispositivo, mai automatico.
-- **Chiusure gestibili dopo il deploy:** dal pannello admin si impostano giorni settimanali di riposo, date straordinarie e periodi di ferie; non richiedono modifiche al codice. Le prenotazioni già presenti non sono annullate automaticamente.
-- **Cronologia:** gli spostamenti, le cancellazioni e le modifiche dello staff sono registrati in D1.
+- **Menu digitale completo** (148 voci: ristorante, pizzeria, beverage, carta dei vini) con prezzi reali, ricerca, sezioni e categorie.
+  Fonte: app ufficiale del locale (novembre 2026), in `scripts/menu-source.txt`.
+- **Ordini online asporto e consegna**: carrello, scelta giorno/orario, indirizzo per la consegna, pagamento al ritiro/consegna (contanti o carta). Nessun pagamento online e nessuna commissione.
+  I prezzi sono **sempre ricalcolati dal server** dal database; il cliente non può alterarli.
+- **Capienza per fascia oraria** (numero massimo di ordini per orario) con inserimento atomico su D1, preavviso minimo, giorni ordinabili in anticipo, ordine minimo e costo di consegna.
+- **Pagina di stato dell'ordine** `/ordine/#token`: il cliente segue l'ordine (ricevuto → confermato → in preparazione → pronto/in consegna) e può annullarlo finché non è confermato. Nel DB c'è solo l'hash del token.
+- **Prenotazione tavoli** (sistema esistente): calendario, richieste da confermare, link personale `/gestisci/`, chiusure.
+- **Gestionale `/admin/`**:
+  - *Ordini*: lista del giorno, avviso sonoro e badge per i nuovi ordini, aggiornamento automatico ogni 20 s, cambio stato in un tocco, messaggio WhatsApp precompilato con link di tracciamento, **stampa comanda** (formato scontrino 72 mm) e riepilogo del giorno.
+  - *Menu*: modifica piatti, prezzi, descrizioni, etichette (vegano, piccante…), categorie; interruttore "esaurito" che nasconde subito il piatto.
+  - *Ordini & locale*: attiva/disattiva ordini, asporto, consegna, carta; costo e minimo consegna; zone; fasce orarie; contatti e orari mostrati sul sito.
+  - *Prenotazioni, Tavoli, Orari tavoli e chiusure*: come prima. Le chiusure valgono anche per gli ordini.
+- Notifiche push (Web Push/VAPID) per nuovi ordini e prenotazioni, invariate.
+- Pulizia automatica di ordini e prenotazioni dopo 90 giorni (cron giornaliero).
 
-**Una modifica del cliente su una prenotazione confermata la riporta in attesa di riconferma.** In modalità `request` le richieste non assegnano tavoli di esempio: lo staff deve confermare un tavolo reale.
+## Impostazioni iniziali (migration 0005)
 
-## Funzionalità
+- Orari: pranzo 12:30–14:30, cena 19:00–23:00, **chiuso il martedì** (fonte: Google Maps). Prenotazioni e chiusure del vecchio cliente sono state riallineate.
+- Asporto e consegna attivi, **costo consegna 0 € e minimo 0 €**: verificare con il cliente e impostarli da *Ordini & locale*.
+- Birre alla spina e filetto a peso sono "solo al tavolo" (non ordinabili online).
+- "Crea la tua pizza" dell'app originale non è stata riportata: si può aggiungere come piatto o con le note per piatto.
 
-- Sito mobile-first: hero fotografica, animazioni leggere e rispettose di `prefers-reduced-motion`, sezioni editoriali, gallery, indicazioni e contatti reali.
-- Richiesta tavolo con data, numero ospiti, orari realmente disponibili, validazione lato server e consenso privacy.
-- Dashboard `/admin/` riservata: agenda per data, filtri, conferma/annullamento, aggiunta manuale, pulsante WhatsApp con testo precompilato (invio manuale), coperti.
-- Sala: elenco tavoli modificabili e stato di occupazione per fascia. Impostazioni: attiva/disattiva prenotazioni, orari, durata, gruppi e date di chiusura.
-- Database Cloudflare D1 con inserimento atomico del tavolo libero per ridurre doppie assegnazioni anche con richieste contemporanee. Pulizia programmata dei dati delle prenotazioni dopo 90 giorni.
-- Notifiche push gratuite tramite Web Push con VAPID, da attivare dal dispositivo dell'amministratore. Il sistema invia soltanto "Nuova prenotazione", senza dati personali nelle notifiche.
-- Login protetto con secret Cloudflare, cookie `HttpOnly`, `SameSite=Strict` e firma HMAC; protezione sull'origine, limitazione tentativi di accesso e invio prenotazioni.
-- Foto ORIGINALI della versione precedente del sito. La workflow scarica le immagini **prima del cambio di DNS** e le incorpora negli asset statici pubblicati su Cloudflare.
+## Immagini
+
+Logo, foto della sala e della pizza Contadina vengono scaricate durante il build (`npm run photos`) dall'host originale (fw360) in `public/assets/img/`.
+Se il download fallisce il sito usa direttamente l'URL originale. Per renderle permanenti, committa i file in `public/assets/img/`.
 
 ## Deploy automatico su Cloudflare Workers Builds
 
 Questa è una app **Cloudflare Workers + Static Assets + D1**, non un progetto Pages.
 Il repository è collegato a **Cloudflare Workers Builds**: ogni push su `main` avvia un nuovo deploy automatico.
-La GitHub Action `Deploy Terrazza da Bomber` rimane disponibile solo per l'esecuzione manuale di emergenza, per evitare doppie pubblicazioni.
+La GitHub Action di deploy rimane disponibile solo per l'esecuzione manuale di emergenza, per evitare doppie pubblicazioni.
 
 In **Cloudflare → Workers & Pages → terrazzadabomber → Settings → Build**, imposta:
 

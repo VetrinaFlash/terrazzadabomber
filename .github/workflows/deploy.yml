@@ -1,11 +1,11 @@
-name: Deploy Terrazza da Bomber (Workers + D1)
+name: Deploy Tipiko (Workers + D1)
 on:
   # Backup manuale: il deploy automatico è gestito da Cloudflare Workers Builds
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: terrazzadabomber-production
+  group: tipiko-production
   cancel-in-progress: false
 jobs:
   deploy:

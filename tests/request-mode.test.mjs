@@ -6,7 +6,7 @@ import worker from '../src/worker.js';
 
 function mockDatabase() {
   const sqlite = new DatabaseSync(':memory:');
-  for (const file of ['0001_initial.sql', '0002_requests_mode.sql', '0003_client_management.sql', '0004_closing_days.sql']) {
+  for (const file of ['0001_initial.sql', '0002_requests_mode.sql', '0003_client_management.sql', '0004_closing_days.sql', '0005_tipiko_ordering.sql']) {
     sqlite.exec(readFileSync(new URL('../migrations/' + file, import.meta.url), 'utf8'));
   }
   const DB = {
@@ -47,6 +47,7 @@ function req(path, method = 'GET', body = null, cookie = '') {
 const read = async response => ({ status: response.status, headers: response.headers, data: await response.json() });
 const futureDate = () => {
   const d = new Date(); d.setUTCDate(d.getUTCDate() + 4);
+  if (d.getUTCDay() === 2) d.setUTCDate(d.getUTCDate() + 1); // Tipiko è chiuso il martedì
   return d.toISOString().slice(0, 10);
 };
 test('pending customer request after migration is saved WITHOUT assigning demo tables', async () => {
