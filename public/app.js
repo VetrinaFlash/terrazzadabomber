@@ -1,6 +1,8 @@
 /* Tipiko — menu digitale, carrello, ordini online e prenotazione tavoli */
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
+const on = (sel, ev, fn) => { const el = document.querySelector(sel); if (el) el.addEventListener(ev, fn); };
+const HAS_MENU = !!document.querySelector('#menuBody'), HAS_BOOKING = !!document.querySelector('#bookingForm'), HAS_DRAWER = !!document.querySelector('#orderDrawer');
 const root = document.documentElement;
 const euro = c => (c / 100).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' });
 const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -39,7 +41,7 @@ window.addEventListener('scroll', () => { if (raf) return; raf = true; requestAn
 const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); } }), { threshold: .12 }) : null;
 $$('.reveal').forEach(el => io ? io.observe(el) : el.classList.add('in-view'));
 $('#year').textContent = new Date().getFullYear();
-$('#mapLoad').addEventListener('click', () => {
+on('#mapLoad', 'click', () => {
   const f = document.createElement('iframe');
   f.src = 'https://maps.google.com/maps?q=39.1343078,16.079319&z=17&output=embed';
   f.title = 'Mappa: Tipiko Ristorante Pizzeria, Amantea'; f.loading = 'lazy'; f.referrerPolicy = 'no-referrer-when-downgrade';
@@ -59,6 +61,7 @@ function applySite() {
   $$('[data-site-href]').forEach(el => { const v = hrefs[el.dataset.siteHref]; if (v) el.href = v; else if (['instagram', 'facebook'].includes(el.dataset.siteHref)) el.hidden = true; });
   const today = dateStr(new Date());
   const status = $('#openStatus');
+  if (!status) return;
   if (isClosedDay(today)) { status.querySelector('i').className = 'status-dot closed'; status.querySelector('span').textContent = 'Oggi siamo chiusi · ' + (site.hours || ''); }
   else { status.querySelector('i').className = 'status-dot open'; status.querySelector('span').textContent = 'Oggi aperti · ' + (site.hours || '').replace(/\s*·?\s*Chiuso[^·]*$/i, ''); }
 }
@@ -99,30 +102,30 @@ function renderMenu() {
   if (!shown.length) { body.innerHTML = `<div class="menu-empty">Nessun piatto trovato per «${esc(searchTerm)}».</div>`; return; }
   body.innerHTML = shown.map(c => `<section class="menu-category" id="cat-${c.id}"><h3>${esc(c.name)}${searchTerm ? `<small>${esc(c.section)}</small>` : ''}</h3>${c.description ? `<p>${esc(c.description)}</p>` : ''}<div class="menu-items">${c.items.map(i => itemHTML(i, c)).join('')}</div></section>`).join('');
 }
-$('#sectionTabs').addEventListener('click', e => {
+on('#sectionTabs', 'click', e => {
   const b = e.target.closest('[data-section]'); if (!b) return;
   activeSection = b.dataset.section; searchTerm = ''; $('#menuSearch').value = '';
   renderMenu(); $('#menu').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 });
-$('#categoryChips').addEventListener('click', e => {
+on('#categoryChips', 'click', e => {
   const b = e.target.closest('[data-cat]'); if (!b) return;
   const target = document.getElementById('cat-' + b.dataset.cat);
   const offset = $('.site-header').offsetHeight + $('#menuNav').offsetHeight + 8;
   window.scrollTo({ top: target.getBoundingClientRect().top + scrollY - offset, behavior: 'smooth' });
 });
 let searchTimer;
-$('#menuSearch').addEventListener('input', e => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { searchTerm = e.target.value.trim().slice(0, 40); renderMenu(); }, 120); });
+on('#menuSearch', 'input', e => { clearTimeout(searchTimer); searchTimer = setTimeout(() => { searchTerm = e.target.value.trim().slice(0, 40); renderMenu(); }, 120); });
 const chipObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
   entries.forEach(en => { if (en.isIntersecting) { const id = en.target.id.slice(4); $$('#categoryChips .chip').forEach(c => { const on = c.dataset.cat === id; c.classList.toggle('active', on); if (on) c.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); }); } });
 }, { rootMargin: '-45% 0px -50% 0px' }) : null;
-new MutationObserver(() => { chipObserver && $$('.menu-category').forEach(s => chipObserver.observe(s)); }).observe($('#menuBody'), { childList: true });
-$('#menuBody').addEventListener('click', e => {
+HAS_MENU && new MutationObserver(() => { chipObserver && $$('.menu-category').forEach(s => chipObserver.observe(s)); }).observe($('#menuBody'), { childList: true });
+on('#menuBody', 'click', e => {
   const add = e.target.closest('[data-add]');
   const card = e.target.closest('.menu-item.can-order');
   if (add) { e.stopPropagation(); quickAdd(Number(add.dataset.add)); return; }
   if (card) openItem(Number(card.dataset.item));
 });
-$('#menuBody').addEventListener('keydown', e => { const card = e.target.closest('.menu-item.can-order'); if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openItem(Number(card.dataset.item)); } });
+on('#menuBody', 'keydown', e => { const card = e.target.closest('.menu-item.can-order'); if (card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openItem(Number(card.dataset.item)); } });
 
 async function loadMenu() {
   try {
@@ -135,7 +138,7 @@ async function loadMenu() {
 /* ---------- Scheda piatto ---------- */
 let modalItem = null, modalQty = 1, lastFocus = null;
 function openModal(el) { lastFocus = document.activeElement; el.hidden = false; document.body.classList.add('lock'); el.querySelector('button, input, a')?.focus(); }
-function closeModal(el) { el.hidden = true; if ($$('.modal:not([hidden])').length === 0 && $('#orderDrawer').hidden) document.body.classList.remove('lock'); lastFocus?.focus?.(); }
+function closeModal(el) { el.hidden = true; if ($$('.modal:not([hidden])').length === 0 && (!HAS_DRAWER || $('#orderDrawer').hidden)) document.body.classList.remove('lock'); lastFocus?.focus?.(); }
 $$('.modal').forEach(m => { m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) closeModal(m); }); });
 function openItem(id) {
   const i = itemsById.get(id); if (!i) return;
@@ -145,9 +148,9 @@ function openItem(id) {
   $('#itemModalNotes').value = ''; updateItemModal(); openModal($('#itemModal'));
 }
 const updateItemModal = () => { $('#itemQty').textContent = modalQty; $('#itemModalPrice').textContent = euro(modalItem.price_cents * modalQty); };
-$('#itemMinus').addEventListener('click', () => { modalQty = Math.max(1, modalQty - 1); updateItemModal(); });
-$('#itemPlus').addEventListener('click', () => { modalQty = Math.min(30, modalQty + 1); updateItemModal(); });
-$('#itemAdd').addEventListener('click', () => { addToCart(modalItem.id, modalQty, $('#itemModalNotes').value.trim().slice(0, 120)); closeModal($('#itemModal')); });
+on('#itemMinus', 'click', () => { modalQty = Math.max(1, modalQty - 1); updateItemModal(); });
+on('#itemPlus', 'click', () => { modalQty = Math.min(30, modalQty + 1); updateItemModal(); });
+on('#itemAdd', 'click', () => { addToCart(modalItem.id, modalQty, $('#itemModalNotes').value.trim().slice(0, 120)); closeModal($('#itemModal')); });
 
 /* ---------- Carrello ---------- */
 let cart = (store.get('tipiko_cart_v1') || []).filter(l => l && Number.isInteger(l.id) && Number.isInteger(l.qty));
@@ -171,6 +174,7 @@ const quickAdd = id => addToCart(id, 1, '');
 function updateCartUI() {
   const n = count(), total = subtotal(), has = n > 0 && ordering.ordering_enabled;
   $('#cartCount').textContent = n; $('#cartButton').hidden = !has;
+  if (!HAS_DRAWER) { $('#cartButton').hidden = n === 0; return; }
   $('#cartBarCount').textContent = n; $('#cartBarTotal').textContent = euro(total);
   $('#cartBar').hidden = !has || !$('#orderDrawer').hidden; document.body.classList.toggle('has-cart', has);
   if (!$('#orderDrawer').hidden) renderDrawer();
@@ -180,13 +184,13 @@ function updateCartUI() {
 let step = 'cart', orderDay = '', orderTime = '';
 function openDrawer() { lastFocus = document.activeElement; step = 'cart'; $('#orderDrawer').hidden = false; $('#drawerBackdrop').hidden = false; document.body.classList.add('lock'); $('#cartBar').hidden = true; renderDrawer(); $('#drawerClose').focus(); }
 function closeDrawer() { $('#orderDrawer').hidden = true; $('#drawerBackdrop').hidden = true; document.body.classList.remove('lock'); updateCartUI(); lastFocus?.focus?.(); }
-$('#cartBar').addEventListener('click', openDrawer); $('#cartButton').addEventListener('click', openDrawer);
-$('#drawerClose').addEventListener('click', closeDrawer); $('#drawerBackdrop').addEventListener('click', closeDrawer);
-$('#drawerBack').addEventListener('click', () => { step = 'cart'; renderDrawer(); });
+on('#cartBar', 'click', openDrawer); on('#cartButton', 'click', () => HAS_DRAWER ? openDrawer() : location.assign('/menu/#carrello'));
+on('#drawerClose', 'click', closeDrawer); on('#drawerBackdrop', 'click', closeDrawer);
+on('#drawerBack', 'click', () => { step = 'cart'; renderDrawer(); });
 window.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   const open = $$('.modal:not([hidden])').pop(); if (open) return closeModal(open);
-  if (!$('#orderDrawer').hidden) closeDrawer(); setMenu(false);
+  if (HAS_DRAWER && !$('#orderDrawer').hidden) closeDrawer(); setMenu(false);
 });
 const orderType = () => $('#checkoutForm').elements.type.value;
 function renderDrawer() {
@@ -207,13 +211,13 @@ function renderDrawer() {
   btn.disabled = !cart.length || belowMin;
   btn.textContent = isCart ? `Continua · ${euro(sub)}` : `Invia ordine · ${euro(sub + fee)}`;
 }
-$('#cartList').addEventListener('click', e => {
+on('#cartList', 'click', e => {
   const inc = e.target.closest('[data-inc]'), dec = e.target.closest('[data-dec]');
   if (inc) { const l = cart[Number(inc.dataset.inc)]; l.qty = Math.min(30, l.qty + 1); }
   if (dec) { const i = Number(dec.dataset.dec); cart[i].qty -= 1; if (cart[i].qty < 1) cart.splice(i, 1); }
   if (inc || dec) { saveCart(); renderMenu(); }
 });
-$('#drawerPrimary').addEventListener('click', () => {
+on('#drawerPrimary', 'click', () => {
   if (step === 'cart') { step = 'checkout'; renderDrawer(); setupCheckout(); $('.drawer-body').scrollTop = 0; return; }
   submitOrder();
 });
@@ -238,7 +242,7 @@ function updateTypeUI() {
   $('#orderTimeLabel').textContent = delivery ? 'Orario di consegna (indicativo)' : 'Orario di ritiro';
   renderDrawer();
 }
-$('#orderType').addEventListener('change', updateTypeUI);
+on('#orderType', 'change', updateTypeUI);
 function renderDays() {
   const today = new Date(), days = [];
   for (let n = 0; n <= (ordering.days_ahead ?? 2); n++) days.push(dateStr(addDays(today, n)));
@@ -248,7 +252,7 @@ function renderDays() {
   $('#orderDays').innerHTML = days.map((d, i) => `<button type="button" class="day-chip ${d === orderDay ? 'selected' : ''}" data-day="${d}" ${isClosedDay(d) ? 'disabled title="Chiuso"' : ''}><b>${i === 0 ? 'Oggi' : i === 1 ? 'Domani' : fmt.format(new Date(d + 'T12:00:00')).split(' ')[0]}</b><small>${isClosedDay(d) ? 'chiuso' : fmt.format(new Date(d + 'T12:00:00')).replace(/^\S+\s/, '')}</small></button>`).join('');
   loadOrderSlots();
 }
-$('#orderDays').addEventListener('click', e => { const b = e.target.closest('[data-day]'); if (!b || b.disabled) return; orderDay = b.dataset.day; $$('#orderDays .day-chip').forEach(x => x.classList.toggle('selected', x === b)); loadOrderSlots(); });
+on('#orderDays', 'click', e => { const b = e.target.closest('[data-day]'); if (!b || b.disabled) return; orderDay = b.dataset.day; $$('#orderDays .day-chip').forEach(x => x.classList.toggle('selected', x === b)); loadOrderSlots(); });
 let slotSeq = 0;
 async function loadOrderSlots() {
   const node = $('#orderSlots'), id = ++slotSeq; orderTime = '';
@@ -262,7 +266,7 @@ async function loadOrderSlots() {
     node.innerHTML = group('Pranzo', lunch) + group('Cena', dinner);
   } catch { if (id === slotSeq) node.innerHTML = '<div class="slot-hint">Orari non raggiungibili. Riprova o chiamaci.</div>'; }
 }
-$('#orderSlots').addEventListener('click', e => { const b = e.target.closest('[data-time]'); if (!b) return; orderTime = b.dataset.time; $$('#orderSlots .slot').forEach(x => { x.classList.toggle('selected', x === b); x.setAttribute('aria-pressed', String(x === b)); }); });
+on('#orderSlots', 'click', e => { const b = e.target.closest('[data-time]'); if (!b) return; orderTime = b.dataset.time; $$('#orderSlots .slot').forEach(x => { x.classList.toggle('selected', x === b); x.setAttribute('aria-pressed', String(x === b)); }); });
 const checkoutError = msg => { const m = $('#checkoutMessage'); m.textContent = msg; m.className = 'form-message error'; m.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
 async function submitOrder() {
   const f = $('#checkoutForm'); $('#checkoutMessage').textContent = ''; $('#checkoutMessage').className = '';
@@ -292,14 +296,14 @@ async function copy(btn) {
   const link = btn.dataset.link; if (!link) return;
   try { await navigator.clipboard.writeText(link); btn.textContent = '✓ Copiato'; } catch { prompt('Copia il link', link); }
 }
-$('#copyTrackLink').addEventListener('click', e => copy(e.currentTarget));
+on('#copyTrackLink', 'click', e => copy(e.currentTarget));
 
 /* ---------- Prenotazione tavolo ---------- */
 const form = $('#bookingForm'), dateInput = $('#date'), guestsInput = $('#guests'), timeInput = $('#time'), slotsNode = $('#timeSlots'), bookingMessage = $('#bookingMessage');
 let requestSeq = 0;
 const today = new Date(), until = addDays(today, 90);
-dateInput.min = dateStr(today); dateInput.max = dateStr(until); dateInput.value = dateStr(today);
-const bookingCalendar = window.TerrazzaCalendar?.mount({ container: '#bookingCalendar', input: '#date' });
+if (HAS_BOOKING) { dateInput.min = dateStr(today); dateInput.max = dateStr(until); dateInput.value = dateStr(today); }
+const bookingCalendar = HAS_BOOKING ? window.TerrazzaCalendar?.mount({ container: '#bookingCalendar', input: '#date' }) : null;
 const errText = msg => { bookingMessage.textContent = msg; bookingMessage.className = 'form-message error'; };
 function slotMessage(text) { slotsNode.innerHTML = ''; const p = document.createElement('div'); p.className = 'slot-hint'; p.textContent = text; slotsNode.append(p); }
 async function loadSlots() {
@@ -318,8 +322,8 @@ async function loadSlots() {
     }
   } catch { if (id === requestSeq) slotMessage('Disponibilità non raggiungibile. Contattaci su WhatsApp.'); }
 }
-dateInput.addEventListener('change', loadSlots); guestsInput.addEventListener('change', loadSlots);
-form.addEventListener('submit', async e => {
+if (HAS_BOOKING) { dateInput.addEventListener('change', loadSlots); guestsInput.addEventListener('change', loadSlots); }
+form?.addEventListener('submit', async e => {
   e.preventDefault(); if (!form.reportValidity()) return;
   if (!timeInput.value) return errText('Seleziona un orario tra quelli disponibili.');
   const btn = $('#bookingSubmit'); btn.disabled = true; btn.classList.add('loading'); bookingMessage.textContent = '';
@@ -334,9 +338,9 @@ form.addEventListener('submit', async e => {
   } catch (err) { if ((err.message || '').includes('tavoli disponibili')) await loadSlots(); errText(err.message || 'Impossibile inviare la richiesta. Riprova.'); }
   finally { btn.disabled = false; btn.classList.remove('loading'); }
 });
-$('#copyManageLink').addEventListener('click', e => copy(e.currentTarget));
-$('#closeSuccess').addEventListener('click', () => closeModal($('#successScreen')));
-$('#successOk').addEventListener('click', () => closeModal($('#successScreen')));
+on('#copyManageLink', 'click', e => copy(e.currentTarget));
+on('#closeSuccess', 'click', () => closeModal($('#successScreen')));
+on('#successOk', 'click', () => closeModal($('#successScreen')));
 
 /* ---------- Avvio ---------- */
 async function init() {
@@ -345,18 +349,21 @@ async function init() {
     site = json.site || {}; ordering = json.ordering || { ordering_enabled: false };
     closures = { closed_dates: json.closed_dates || [], closed_weekdays: json.closed_weekdays || [], closed_periods: json.closed_periods || [] };
     applySite();
-    $('#orderingOff').hidden = ordering.ordering_enabled;
-    $('#serviceDelivery').hidden = !ordering.delivery_enabled;
+    if ($('#orderingOff')) $('#orderingOff').hidden = ordering.ordering_enabled;
+    if ($('#serviceDelivery')) $('#serviceDelivery').hidden = !ordering.delivery_enabled;
     $$('[data-delivery-info]').forEach(el => el.textContent = (ordering.delivery_area || 'Ad Amantea e dintorni') + (ordering.delivery_fee_cents ? ' · ' + euro(ordering.delivery_fee_cents) : ''));
-    if (!ordering.ordering_enabled) { $('#menuIntro').textContent = 'Il menu completo con i prezzi aggiornati.'; $$('.header-cta, .hero-actions .btn-wine').forEach(a => a.textContent = 'Scopri il menu'); }
+    if (!ordering.ordering_enabled) { if ($('#menuIntro')) $('#menuIntro').textContent = 'Il menu completo con i prezzi aggiornati.'; $$('.header-cta, .hero-actions .btn-wine').forEach(a => a.textContent = 'Scopri il menu'); }
     bookingCalendar?.setClosures(json, true);
+    if (HAS_BOOKING) {
     if (!json.booking_enabled) { $('#bookingUnavailable').hidden = false; form.hidden = true; }
     const max = Math.min(json.max_guests || 8, 20); guestsInput.innerHTML = '';
     for (let n = 1; n <= max; n++) { const o = document.createElement('option'); o.value = n; o.textContent = `${n} ${n === 1 ? 'persona' : 'persone'}`; guestsInput.append(o); }
     guestsInput.value = Math.min(max, 2);
     if (json.booking_enabled) loadSlots();
-  } catch { slotMessage('Sistema momentaneamente non disponibile: puoi prenotare telefonicamente.'); }
-  await loadMenu();
+    }
+  } catch { if (HAS_BOOKING) slotMessage('Sistema momentaneamente non disponibile: puoi prenotare telefonicamente.'); }
+  if (HAS_MENU) await loadMenu();
   updateCartUI();
+  if (HAS_DRAWER && location.hash === '#carrello' && count() > 0) openDrawer();
 }
 init();

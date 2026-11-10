@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2b130a">
+<title>Menu e ordini online · Tipiko Ristorante Pizzeria, Amantea</title>
+<meta name="description" content="Il menu completo di Tipiko ad Amantea con i prezzi: antipasti di mare, primi, pizze, coccoli, birre e vini calabresi. Ordina online da asporto o con consegna a domicilio.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<script src="/app.js" defer></script>
+<meta property="og:type" content="restaurant"><meta property="og:title" content="Tipiko Ristorante Pizzeria · Amantea"><meta property="og:description" content="Cucina tradizionale a km zero, pesce fresco e pizze. Ordina online o prenota il tuo tavolo.">
+<meta property="og:image" content="https://uploads3.fw360.it/uploads/env/4/16712/img/pages/gallery/whatsapp-image-2024-05-03-at-14-58-38.jpeg">
+</head>
+<body class="subpage">
+<a class="skip-link" href="#contenuto">Vai al contenuto</a>
+<header class="site-header" id="top">
+  <div class="header-inner">
+    <a class="brand" href="/" aria-label="Tipiko Ristorante Pizzeria, torna all'inizio">
+      <img class="brand-logo" src="/assets/img/tipiko-logo.png" data-fallback="https://uploads3.fw360.it/uploads/env/4/16712/img/logos/tipikolog.png" alt="Tipiko Ristorante Pizzeria" width="168" height="60">
+    </a>
+    <nav class="desktop-nav" aria-label="Navigazione principale">
+      <a href="/menu/">Menu</a><a href="/#chi-siamo">Chi siamo</a><a href="/prenota/">Prenota</a><a href="/#dove-siamo">Dove siamo</a>
+    </nav>
+    <div class="header-actions">
+      <a class="header-call" data-site-href="tel" href="tel:+393296671439" aria-label="Chiama Tipiko"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg></a>
+      <button class="cart-button" id="cartButton" type="button" aria-label="Apri il tuo ordine" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h-2l-1 2v1h2l3.6 7.6-1.4 2.4c-.1.3-.2.6-.2 1 0 1.1.9 2 2 2h12v-2H10.4a.2.2 0 0 1-.2-.3l.9-1.7h7.4c.8 0 1.4-.4 1.7-1l3.6-6.5A1 1 0 0 0 23 5H8.2L7.3 3H4"/><circle cx="10" cy="21.5" r="1.5"/><circle cx="19" cy="21.5" r="1.5"/></svg><span id="cartCount">0</span></button>
+      <a class="btn btn-wine header-cta" href="/menu/">Ordina online</a>
+      <button class="mobile-toggle" id="menuToggle" type="button" aria-label="Apri menu" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+<nav class="mobile-menu" id="mobileMenu" aria-label="Menu mobile">
+  <a href="/menu/">Menu & ordina</a><a href="/#chi-siamo">Chi siamo</a><a href="/prenota/">Prenota un tavolo</a><a href="/#dove-siamo">Dove siamo</a>
+  <div class="mobile-menu-foot"><a data-site-href="tel" href="tel:+393296671439" data-site="phone">+39 329 667 1439</a><span data-site="hours">Pranzo 12:30 – 14:30 · Cena 19:00 – 23:00 · Chiuso il martedì</span></div>
+</nav>
+
+<main id="contenuto">
+<section class="page-hero" aria-labelledby="pageTitle"><div class="page-hero-inner"><p class="kicker">Asporto · Consegna a domicilio</p><h1 id="pageTitle">Il menu di <em>Tipiko</em></h1><p>Scegli i piatti, aggiungili al tuo ordine e decidi se ritirare al locale o riceverli a casa. Paghi al ritiro o alla consegna.</p><div class="page-hero-links"><a href="/prenota/">Preferisci mangiare da noi? Prenota un tavolo →</a></div></div></section>
+<section class="menu-section is-page" id="menu" aria-labelledby="menuTitle">
+  <div class="menu-head">
+    <div>
+      <p class="eyebrow">Il nostro menu</p>
+      <h2 id="menuTitle">Scegli, aggiungi, <em>ordina.</em></h2>
+      <p class="menu-intro" id="menuIntro">Prezzi aggiornati. Aggiungi i piatti al tuo ordine e scegli asporto o consegna: paghi al ritiro o alla consegna.</p>
+    </div>
+    <label class="menu-search"><span class="sr-only">Cerca nel menu</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 6 12l4.3 4.3-1.4 1.4-4.3-4.3A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/></svg><input id="menuSearch" type="search" placeholder="Cerca un piatto, es. pignatiallu" autocomplete="off"></label>
+  </div>
+  <div class="ordering-off" id="orderingOff" hidden>Gli ordini online sono momentaneamente sospesi. Puoi consultare il menu e ordinare per telefono al <a data-site-href="tel" href="tel:+393296671439" data-site="phone">+39 329 667 1439</a>.</div>
+  <div class="menu-nav" id="menuNav">
+    <div class="section-tabs" id="sectionTabs" role="tablist" aria-label="Sezioni del menu"></div>
+    <div class="category-chips" id="categoryChips" aria-label="Categorie"></div>
+  </div>
+  <div class="menu-body" id="menuBody" aria-live="polite"><div class="menu-loading"><span></span><span></span><span></span></div></div>
+  <p class="allergen-note">Tutte le pietanze possono contenere allergeni (Reg. UE 1169/2011): chiedi al personale la documentazione. In mancanza di prodotto fresco alcuni ingredienti possono essere surgelati all'origine. Il pesce servito crudo è abbattuto come da Reg. CE 853/2004.</p>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-top">
+    <img class="footer-logo" src="/assets/img/tipiko-logo.png" data-fallback="https://uploads3.fw360.it/uploads/env/4/16712/img/logos/tipikolog.png" alt="Tipiko Ristorante Pizzeria" loading="lazy" width="210" height="75">
+    <div class="footer-cols">
+      <div><strong>Tipiko</strong><span data-site="address">Via S. Bernardino, 1</span><span data-site="city">87032 Amantea (CS)</span></div>
+      <div><strong>Contatti</strong><a data-site-href="tel" href="tel:+393296671439" data-site="phone">+39 329 667 1439</a><a data-site-href="mail" href="mailto:tipiko.amantea@gmail.com" data-site="email">tipiko.amantea@gmail.com</a></div>
+      <div><strong>Esplora</strong><a href="/menu/">Menu e ordini</a><a href="/prenota/">Prenota</a><a href="/privacy.html">Privacy</a></div>
+    </div>
+  </div>
+  <div class="footer-bottom"><span>© <span id="year"></span> Tipiko Ristorante Pizzeria · Amantea</span><span>Sito realizzato da Daniele Zobel</span></div>
+</footer>
+
+<button class="cart-bar" id="cartBar" type="button" hidden><span class="cart-bar-count" id="cartBarCount">0</span><span class="cart-bar-label">Vedi il tuo ordine</span><strong id="cartBarTotal">0,00 €</strong></button>
+
+<div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+<aside class="drawer" id="orderDrawer" aria-labelledby="drawerTitle" role="dialog" aria-modal="true" hidden>
+  <div class="drawer-head">
+    <button type="button" class="drawer-back" id="drawerBack" hidden aria-label="Torna al carrello">←</button>
+    <h2 id="drawerTitle">Il tuo ordine</h2>
+    <button type="button" class="drawer-close" id="drawerClose" aria-label="Chiudi">×</button>
+  </div>
+  <div class="drawer-steps" aria-hidden="true"><span class="active" data-step-dot="cart">Carrello</span><span data-step-dot="checkout">Dati e orario</span></div>
+  <div class="drawer-body">
+    <div id="stepCart">
+      <div id="cartList" class="cart-list"></div>
+      <div class="cart-empty" id="cartEmpty"><span aria-hidden="true">🍕</span><strong>Il carrello è vuoto</strong><small>Aggiungi qualcosa dal menu per iniziare.</small></div>
+    </div>
+    <form id="checkoutForm" novalidate hidden>
+      <fieldset class="field">
+        <legend>Come vuoi ricevere l'ordine?</legend>
+        <div class="segmented" id="orderType">
+          <label><input type="radio" name="type" value="takeaway" checked><span><b>Asporto</b><small>Ritiri al locale</small></span></label>
+          <label id="deliveryOption"><input type="radio" name="type" value="delivery"><span><b>Consegna</b><small id="deliveryFeeLabel">A domicilio</small></span></label>
+        </div>
+      </fieldset>
+      <div class="field"><span>Giorno</span><div class="day-chips" id="orderDays"></div></div>
+      <div class="field"><span id="orderTimeLabel">Orario di ritiro</span><div class="slots" id="orderSlots"><div class="slot-hint">Scegli il giorno.</div></div></div>
+      <div class="field-row">
+        <label class="field"><span>Nome e cognome</span><input name="name" maxlength="70" autocomplete="name" required placeholder="Mario Rossi"></label>
+        <label class="field"><span>Telefono</span><input name="phone" type="tel" maxlength="25" autocomplete="tel" inputmode="tel" required placeholder="+39 ..."></label>
+      </div>
+      <label class="field" id="addressField" hidden><span>Indirizzo di consegna</span><input name="address" maxlength="180" autocomplete="street-address" placeholder="Via, numero civico, località"><small class="field-help" id="deliveryAreaHelp"></small></label>
+      <label class="field"><span>Note per la cucina <small>(facoltative)</small></span><textarea name="notes" maxlength="400" rows="2" placeholder="Citofono, intolleranze, richieste…"></textarea></label>
+      <fieldset class="field">
+        <legend>Pagamento <small>(al ritiro o alla consegna)</small></legend>
+        <div class="segmented compact" id="paymentType">
+          <label><input type="radio" name="payment" value="cash" checked><span><b>Contanti</b></span></label>
+          <label id="cardOption"><input type="radio" name="payment" value="card"><span><b>Carta / Bancomat</b></span></label>
+        </div>
+      </fieldset>
+      <label class="consent"><input type="checkbox" name="privacy" required><span>Ho letto l'<a href="/privacy.html" target="_blank">informativa privacy</a> e acconsento al trattamento dei dati per l'ordine.</span></label>
+      <input type="text" name="company" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div id="checkoutMessage" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+  <div class="drawer-foot">
+    <div class="totals" id="totals"></div>
+    <button type="button" class="btn btn-wine btn-block btn-lg" id="drawerPrimary" disabled>Continua</button>
+  </div>
+</aside>
+
+<div class="modal" id="itemModal" hidden role="dialog" aria-modal="true" aria-labelledby="itemModalTitle">
+  <div class="modal-card item-card">
+    <button type="button" class="modal-close" data-close aria-label="Chiudi">×</button>
+    <p class="eyebrow" id="itemModalCategory"></p>
+    <h3 id="itemModalTitle"></h3>
+    <p id="itemModalDesc" class="muted"></p>
+    <div id="itemModalTags" class="tags"></div>
+    <label class="field"><span>Richieste per questo piatto <small>(facoltative)</small></span><input id="itemModalNotes" maxlength="120" placeholder="Es. senza cipolla, ben cotta"></label>
+    <div class="item-modal-foot">
+      <div class="stepper"><button type="button" id="itemMinus" aria-label="Diminuisci">−</button><output id="itemQty">1</output><button type="button" id="itemPlus" aria-label="Aumenta">+</button></div>
+      <button type="button" class="btn btn-wine btn-lg" id="itemAdd">Aggiungi · <span id="itemModalPrice"></span></button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="orderSuccess" hidden role="dialog" aria-modal="true" aria-labelledby="orderSuccessTitle">
+  <div class="modal-card success-card">
+    <span class="success-check" aria-hidden="true">✓</span>
+    <p class="eyebrow">Ordine inviato</p>
+    <h3 id="orderSuccessTitle">Grazie! Ordine <span id="orderCode"></span></h3>
+    <p id="orderSuccessText">Abbiamo ricevuto il tuo ordine. Lo staff lo conferma a breve: puoi seguirne lo stato dal link qui sotto.</p>
+    <a class="btn btn-wine btn-block" id="orderTrackLink" href="/ordine/">Segui il tuo ordine →</a>
+    <div class="success-links"><button type="button" id="copyTrackLink">Copia link</button><a id="shareTrackWa" href="#" target="_blank" rel="noopener">Salva su WhatsApp</a></div>
+    <button type="button" class="btn btn-outline btn-block" data-close>Torna al sito</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
